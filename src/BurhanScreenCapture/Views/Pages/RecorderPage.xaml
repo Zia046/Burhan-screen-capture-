@@ -1,0 +1,136 @@
+<UserControl x:Class="BurhanScreenCapture.Views.Pages.RecorderPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:BurhanScreenCapture.Controls">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="32,28,32,28" MaxWidth="980" HorizontalAlignment="Left">
+            <DockPanel Margin="0,0,0,20">
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Content="Open recordings folder" Margin="0,0,10,0" Click="OnOpenFolder"/>
+                    <Button x:Name="StartBtn" Style="{StaticResource DangerButton}" Padding="22,10" Click="OnStart">
+                        <StackPanel Orientation="Horizontal"><TextBlock Text="●" Margin="0,0,8,0"/><TextBlock x:Name="StartText" Text="Start Recording"/></StackPanel>
+                    </Button>
+                </StackPanel>
+                <StackPanel>
+                    <TextBlock Text="Screen Recorder" Style="{StaticResource H1}"/>
+                    <TextBlock Text="Record your screen with computer sound and your voice — free, no watermark, no time limit." Style="{StaticResource Muted}"/>
+                </StackPanel>
+            </DockPanel>
+
+            <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock Text="What to record" Style="{StaticResource H2}"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="170"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/></Grid.RowDefinitions>
+                        <RadioButton x:Name="SrcScreen" Content="Full screen" GroupName="src" IsChecked="True" Margin="0,6"/>
+                        <ComboBox x:Name="MonitorBox" Grid.Column="1" HorizontalAlignment="Left" MinWidth="280" DisplayMemberPath="Label" Margin="0,4"/>
+                        <RadioButton x:Name="SrcRegion" Grid.Row="1" Content="Selected area" GroupName="src" Margin="0,6"/>
+                        <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Margin="0,4">
+                            <Button Content="Select area…" Click="OnSelectArea"/>
+                            <TextBlock x:Name="AreaText" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="12,0,0,0" Text="No area selected"/>
+                        </StackPanel>
+                        <RadioButton x:Name="SrcWindow" Grid.Row="2" Content="Window" GroupName="src" Margin="0,6"/>
+                        <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" Margin="0,4">
+                            <ComboBox x:Name="WindowBox" MinWidth="320" MaxWidth="460" DisplayMemberPath="Title" DropDownOpened="OnWindowsOpen"/>
+                            <Button Style="{StaticResource IconButton}" Content="&#xE72C;" ToolTip="Refresh list" Click="OnRefreshWindows" Margin="6,0,0,0"/>
+                        </StackPanel>
+                        <RadioButton x:Name="SrcAudio" Grid.Row="3" Content="Audio only" GroupName="src" Margin="0,6"/>
+                        <TextBlock Grid.Row="3" Grid.Column="1" Text="Records system audio and/or microphone to an .m4a file" Style="{StaticResource Muted}" VerticalAlignment="Center"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock Text="Audio" Style="{StaticResource H2}"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="170"/><ColumnDefinition Width="*"/><ColumnDefinition Width="200"/></Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions><RowDefinition/><RowDefinition/><RowDefinition/></Grid.RowDefinitions>
+                        <CheckBox x:Name="SysAudio" Style="{StaticResource Switch}" Content="System audio" Click="OnAudioOption" Margin="0,6,24,6"/>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="Volume" Style="{StaticResource Muted}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                            <Slider x:Name="SysVol" Width="140" Minimum="0" Maximum="2" Value="1" ValueChanged="OnVolume" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <ProgressBar x:Name="SysMeter" Grid.Column="2" Maximum="1" VerticalAlignment="Center" ToolTip="Computer sound level"/>
+
+                        <CheckBox x:Name="Mic" Grid.Row="1" Style="{StaticResource Switch}" Content="Microphone" Click="OnAudioOption" Margin="0,6,24,6"/>
+                        <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                            <ComboBox x:Name="MicBox" MinWidth="230" MaxWidth="300" SelectionChanged="OnMicChanged"/>
+                            <TextBlock Text="Volume" Style="{StaticResource Muted}" Margin="12,0,8,0" VerticalAlignment="Center"/>
+                            <Slider x:Name="MicVol" Width="100" Minimum="0" Maximum="2" Value="1" ValueChanged="OnVolume" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <ProgressBar x:Name="MicMeter" Grid.Row="1" Grid.Column="2" Maximum="1" VerticalAlignment="Center" ToolTip="Microphone level — speak to test"/>
+                        <TextBlock x:Name="AudioError" Grid.Row="2" Grid.ColumnSpan="3" Foreground="{DynamicResource Danger}" TextWrapping="Wrap" Margin="0,6,0,0" Visibility="Collapsed"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock Text="Video" Style="{StaticResource H2}"/>
+                    <WrapPanel>
+                        <StackPanel Margin="0,0,24,10">
+                            <TextBlock Text="Frame rate" Style="{StaticResource Muted}" Margin="0,0,0,4"/>
+                            <ComboBox x:Name="FpsBox" Width="150" SelectionChanged="OnVideoOption">
+                                <ComboBoxItem Content="15 fps" Tag="15"/>
+                                <ComboBoxItem Content="24 fps" Tag="24"/>
+                                <ComboBoxItem Content="30 fps" Tag="30"/>
+                                <ComboBoxItem Content="60 fps" Tag="60"/>
+                            </ComboBox>
+                        </StackPanel>
+                        <StackPanel Margin="0,0,24,10">
+                            <TextBlock Text="Quality" Style="{StaticResource Muted}" Margin="0,0,0,4"/>
+                            <ComboBox x:Name="QualityBox" Width="150" SelectionChanged="OnVideoOption">
+                                <ComboBoxItem Content="Low (small file)"/>
+                                <ComboBoxItem Content="Standard"/>
+                                <ComboBoxItem Content="High"/>
+                                <ComboBoxItem Content="Ultra"/>
+                            </ComboBox>
+                        </StackPanel>
+                        <StackPanel Margin="0,0,24,10">
+                            <TextBlock Text="Resolution" Style="{StaticResource Muted}" Margin="0,0,0,4"/>
+                            <ComboBox x:Name="ResBox" Width="150" SelectionChanged="OnVideoOption">
+                                <ComboBoxItem Content="Native" Tag="0"/>
+                                <ComboBoxItem Content="1080p" Tag="1080"/>
+                                <ComboBoxItem Content="720p" Tag="720"/>
+                                <ComboBoxItem Content="480p" Tag="480"/>
+                            </ComboBox>
+                        </StackPanel>
+                    </WrapPanel>
+                    <CheckBox x:Name="CursorBox" Style="{StaticResource Switch}" Content="Show mouse pointer" Margin="0,4" Click="OnVideoOption" HorizontalAlignment="Left" MinWidth="320"/>
+                    <CheckBox x:Name="ClicksBox" Style="{StaticResource Switch}" Content="Highlight mouse clicks" Margin="0,4" Click="OnVideoOption" HorizontalAlignment="Left" MinWidth="320"/>
+                    <CheckBox x:Name="CountdownBox" Style="{StaticResource Switch}" Content="3-second countdown before recording" Margin="0,4" Click="OnVideoOption" HorizontalAlignment="Left" MinWidth="320"/>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                        <TextBlock Text="Advanced recording" Style="{StaticResource H2}" Margin="0"/>
+                        <c:ProBadge/>
+                    </StackPanel>
+                    <WrapPanel>
+                        <StackPanel Margin="0,0,24,10">
+                            <TextBlock Text="Recording profile" Style="{StaticResource Muted}" Margin="0,0,0,4"/>
+                            <ComboBox x:Name="ProfileBox" Width="260" SelectionChanged="OnProfile"/>
+                        </StackPanel>
+                        <StackPanel Margin="0,0,24,10">
+                            <TextBlock Text="Custom bitrate (kbps, 0 = auto)" Style="{StaticResource Muted}" Margin="0,0,0,4"/>
+                            <TextBox x:Name="BitrateBox" Width="120" LostFocus="OnBitrate" HorizontalAlignment="Left"/>
+                        </StackPanel>
+                    </WrapPanel>
+                    <CheckBox x:Name="HevcBox" Style="{StaticResource Switch}" Content="H.265 / HEVC encoding (smaller files)" Margin="0,4" Click="OnHevc" HorizontalAlignment="Left" MinWidth="320"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                        <Button Click="OnGif">
+                            <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Icon}" Text="&#xE8B9;" Margin="0,0,8,0"/><TextBlock Text="Record GIF…"/></StackPanel>
+                        </Button>
+                        <TextBlock Text="Select an area and record a short animated GIF." Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <TextBlock x:Name="LastText" Margin="2,16,0,0" Style="{StaticResource Muted}"/>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

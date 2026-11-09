@@ -1,0 +1,23 @@
+<Window x:Class="BurhanScreenCapture.Views.FloatingToolbar"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent" Topmost="True" ShowInTaskbar="False"
+        ResizeMode="NoResize" SizeToContent="WidthAndHeight" Title="Quick Toolbar" FontFamily="{StaticResource UiFont}">
+    <Border CornerRadius="10" Background="{DynamicResource SurfaceBg}" BorderBrush="{DynamicResource BorderBrushSoft}" BorderThickness="1" Padding="4">
+        <StackPanel Orientation="Horizontal">
+            <Border Width="14" Background="Transparent" Cursor="SizeAll" MouseLeftButtonDown="OnDrag" ToolTip="Drag to move">
+                <TextBlock Text="⋮⋮" Foreground="{DynamicResource TextSecondary}" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="10"/>
+            </Border>
+            <Button Style="{StaticResource IconButton}" Content="&#xE7A8;" ToolTip="Capture area" Click="OnArea"/>
+            <Button Style="{StaticResource IconButton}" Content="&#xE740;" ToolTip="Capture full screen" Click="OnFull"/>
+            <Button Style="{StaticResource IconButton}" Content="&#xE737;" ToolTip="Capture active window" Click="OnWindow"/>
+            <Button Style="{StaticResource IconButton}" Content="&#xE917;" ToolTip="Delayed capture (5 s)" Click="OnDelay"/>
+            <Button x:Name="RecBtn" Style="{StaticResource IconButton}" ToolTip="Start / stop recording" Click="OnRecord">
+                <TextBlock x:Name="RecGlyph" Text="●" Foreground="{DynamicResource Danger}" FontSize="15"/>
+            </Button>
+            <Button Style="{StaticResource IconButton}" Content="&#xE70F;" ToolTip="Image editor" Click="OnEditor"/>
+            <Button Style="{StaticResource IconButton}" Content="&#xE80F;" ToolTip="Open Burhan Screen Capture" Click="OnHome"/>
+            <Button Style="{StaticResource IconButton}" Content="&#xE711;" ToolTip="Close toolbar" Click="OnClose" FontSize="12"/>
+        </StackPanel>
+    </Border>
+</Window>

@@ -1,0 +1,110 @@
+<UserControl x:Class="BurhanScreenCapture.Views.Pages.CapturePage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:BurhanScreenCapture.Controls">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="32,28,32,28" MaxWidth="980" HorizontalAlignment="Left">
+            <TextBlock Text="Capture Screenshot" Style="{StaticResource H1}"/>
+            <TextBlock Text="Choose what to capture. Shortcuts work from anywhere, even when this window is closed." Style="{StaticResource Muted}" Margin="0,0,0,20"/>
+
+            <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock Text="Capture now" Style="{StaticResource H2}"/>
+                    <UniformGrid Columns="4" Margin="-4,0">
+                        <Button Margin="4" Height="88" Click="OnArea" ToolTip="Drag to select any area. Click a window to capture just that window.">
+                            <StackPanel><TextBlock Style="{StaticResource Icon}" Text="&#xE7A8;" FontSize="24"/><TextBlock Text="Selected Area" Margin="0,8,0,0" HorizontalAlignment="Center"/><TextBlock x:Name="HkArea" Style="{StaticResource Muted}" FontSize="11" HorizontalAlignment="Center"/></StackPanel>
+                        </Button>
+                        <Button Margin="4" Height="88" Click="OnFull" ToolTip="Capture the selected monitor">
+                            <StackPanel><TextBlock Style="{StaticResource Icon}" Text="&#xE740;" FontSize="24"/><TextBlock Text="Full Screen" Margin="0,8,0,0" HorizontalAlignment="Center"/><TextBlock x:Name="HkFull" Style="{StaticResource Muted}" FontSize="11" HorizontalAlignment="Center"/></StackPanel>
+                        </Button>
+                        <Button Margin="4" Height="88" Click="OnWindow" ToolTip="Capture the window you were using before this one">
+                            <StackPanel><TextBlock Style="{StaticResource Icon}" Text="&#xE737;" FontSize="24"/><TextBlock Text="Active Window" Margin="0,8,0,0" HorizontalAlignment="Center"/><TextBlock x:Name="HkWindow" Style="{StaticResource Muted}" FontSize="11" HorizontalAlignment="Center"/></StackPanel>
+                        </Button>
+                        <Button Margin="4" Height="88" Click="OnAll" ToolTip="One image containing every monitor">
+                            <StackPanel><TextBlock Style="{StaticResource Icon}" Text="&#xE7F4;" FontSize="24"/><TextBlock Text="All Monitors" Margin="0,8,0,0" HorizontalAlignment="Center"/><TextBlock Text="Multi-monitor" Style="{StaticResource Muted}" FontSize="11" HorizontalAlignment="Center"/></StackPanel>
+                        </Button>
+                    </UniformGrid>
+                    <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                        <TextBlock Text="Full screen monitor" Style="{StaticResource Label}" Margin="0,0,12,0"/>
+                        <ComboBox x:Name="MonitorBox" MinWidth="260" DisplayMemberPath="Label"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock Text="Delayed screenshot" Style="{StaticResource H2}"/>
+                    <TextBlock Text="Gives you time to open a menu or tooltip before the capture." Style="{StaticResource Muted}" Margin="0,0,0,12"/>
+                    <WrapPanel>
+                        <ComboBox x:Name="DelayMode" Width="170" Margin="0,0,12,0" SelectedIndex="0">
+                            <ComboBoxItem Content="Selected area"/>
+                            <ComboBoxItem Content="Full screen"/>
+                            <ComboBoxItem Content="Active window"/>
+                            <ComboBoxItem Content="All monitors"/>
+                        </ComboBox>
+                        <RadioButton x:Name="D3" Content="3 seconds" GroupName="delay" IsChecked="True"/>
+                        <RadioButton x:Name="D5" Content="5 seconds" GroupName="delay"/>
+                        <RadioButton x:Name="D10" Content="10 seconds" GroupName="delay"/>
+                        <Button Content="Start countdown" Style="{StaticResource PrimaryButton}" Click="OnDelay"/>
+                    </WrapPanel>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                        <TextBlock Text="Advanced capture" Style="{StaticResource H2}" Margin="0"/>
+                        <c:ProBadge/>
+                    </StackPanel>
+                    <WrapPanel>
+                        <Button Margin="0,0,10,10" Click="OnScrolling" ToolTip="Automatically scrolls and stitches long pages">
+                            <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Icon}" Text="&#xE8CB;" Margin="0,0,8,0"/><TextBlock Text="Scrolling Screenshot"/></StackPanel>
+                        </Button>
+                        <Button Margin="0,0,10,10" Click="OnRepeat" ToolTip="Capture exactly the same area as last time">
+                            <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Icon}" Text="&#xE72C;" Margin="0,0,8,0"/><TextBlock Text="Repeat Last Area"/></StackPanel>
+                        </Button>
+                        <Button Margin="0,0,10,10" Click="OnFixed" ToolTip="A frame of exact size that you position with the mouse">
+                            <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Icon}" Text="&#xE740;" Margin="0,0,8,0"/><TextBlock Text="Fixed Size Area"/></StackPanel>
+                        </Button>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10" VerticalAlignment="Center">
+                            <TextBox x:Name="FixedW" Width="64" LostFocus="OnFixedSizeChanged"/>
+                            <TextBlock Text=" × " Style="{StaticResource Label}"/>
+                            <TextBox x:Name="FixedH" Width="64" LostFocus="OnFixedSizeChanged"/>
+                            <TextBlock Text=" px" Style="{StaticResource Label}"/>
+                        </StackPanel>
+                    </WrapPanel>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Text="After capture" Style="{StaticResource H2}"/>
+                    <CheckBox x:Name="AutoSave" Style="{StaticResource Switch}" Content="Save screenshots automatically" Margin="0,4" Click="OnOption"/>
+                    <CheckBox x:Name="Clip" Style="{StaticResource Switch}" Content="Copy to clipboard" Margin="0,4" Click="OnOption"/>
+                    <CheckBox x:Name="CursorBox" Style="{StaticResource Switch}" Content="Include mouse pointer" Margin="0,4" Click="OnOption"/>
+                    <Grid Margin="0,10,0,0">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="160"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions><RowDefinition/><RowDefinition/><RowDefinition/></Grid.RowDefinitions>
+                        <TextBlock Text="Then" Style="{StaticResource Label}"/>
+                        <ComboBox x:Name="After" Grid.Column="1" Width="220" HorizontalAlignment="Left" Margin="0,4" SelectionChanged="OnOption">
+                            <ComboBoxItem Content="Show preview"/>
+                            <ComboBoxItem Content="Open in editor"/>
+                            <ComboBoxItem Content="Just save"/>
+                        </ComboBox>
+                        <TextBlock Grid.Row="1" Text="Format" Style="{StaticResource Label}"/>
+                        <ComboBox x:Name="Format" Grid.Row="1" Grid.Column="1" Width="220" HorizontalAlignment="Left" Margin="0,4" SelectionChanged="OnOption">
+                            <ComboBoxItem Content="PNG (best quality)"/>
+                            <ComboBoxItem Content="JPG (smaller files)"/>
+                        </ComboBox>
+                        <TextBlock Grid.Row="2" Text="Save to" Style="{StaticResource Label}"/>
+                        <DockPanel Grid.Row="2" Grid.Column="1" Margin="0,4">
+                            <Button DockPanel.Dock="Right" Content="Open" Margin="8,0,0,0" Click="OnOpenFolder"/>
+                            <Button DockPanel.Dock="Right" Content="Change…" Margin="8,0,0,0" Click="OnChangeFolder"/>
+                            <TextBox x:Name="Folder" IsReadOnly="True"/>
+                        </DockPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

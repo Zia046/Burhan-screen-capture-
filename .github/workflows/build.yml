@@ -1,0 +1,95 @@
+name: Build
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    env:
+      DOTNET_NOLOGO: true
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Version
+        id: ver
+        shell: pwsh
+        run: |
+          $v = "1.0.0"
+          if ("${{ github.ref }}" -like "refs/tags/v*") { $v = "${{ github.ref_name }}".TrimStart('v') }
+          "version=$v" >> $env:GITHUB_OUTPUT
+
+      - name: Unit tests (licensing & entitlements)
+        run: dotnet test tests/BurhanScreenCapture.Tests -c Release --logger "console;verbosity=normal"
+
+      - name: Build (Debug — uses development license keys)
+        run: dotnet build src/BurhanScreenCapture/BurhanScreenCapture.csproj -c Debug
+
+      - name: Build license generator
+        run: dotnet build tools/LicenseGenerator -c Release
+
+      - name: Licensing end-to-end with generator (dev keys)
+        shell: pwsh
+        run: |
+          $gen = "tools/LicenseGenerator/bin/Release/net8.0/LicenseGenerator.dll"
+          $key = (dotnet $gen newkey).Trim()
+          dotnet $gen issue --private tools/LicenseGenerator/dev-keys/dev-test-private.txt --key $key --plan Yearly --device ABCD-1234-ABCD-1234 --to "CI Test" --out ci.bslic
+          dotnet $gen verify --public tools/LicenseGenerator/dev-keys/dev-test-public.txt --file ci.bslic
+          if ($LASTEXITCODE -ne 0) { throw "license verify failed" }
+
+      - name: Publish (Release, self-contained win-x64)
+        run: >
+          dotnet publish src/BurhanScreenCapture/BurhanScreenCapture.csproj -c Release -r win-x64
+          --self-contained true -p:PublishReadyToRun=true -p:Version=${{ steps.ver.outputs.version }}
+          -o publish/app
+
+      - name: Smoke test (app starts and stays up)
+        shell: pwsh
+        run: |
+          $p = Start-Process -FilePath "publish/app/BurhanScreenCapture.exe" -ArgumentList "--minimized" -PassThru
+          Start-Sleep -Seconds 12
+          if ($p.HasExited) { 
+            Get-ChildItem "$env:LOCALAPPDATA\Burhan Nexus\Screen Capture Pro\logs" -ErrorAction SilentlyContinue | Get-Content
+            throw "App exited during startup with code $($p.ExitCode)" }
+          Get-ChildItem "$env:LOCALAPPDATA\Burhan Nexus\Screen Capture Pro\logs" -ErrorAction SilentlyContinue | Get-Content
+          Stop-Process -Id $p.Id -Force
+
+      - name: Download Visual C++ runtime for installer
+        shell: pwsh
+        run: Invoke-WebRequest https://aka.ms/vs/17/release/vc_redist.x64.exe -OutFile installer/redist/vc_redist.x64.exe
+
+      - name: Build installer (Inno Setup)
+        shell: pwsh
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (!(Test-Path $iscc)) { choco install innosetup -y --no-progress | Out-Null }
+          & $iscc /DAppVersion=${{ steps.ver.outputs.version }} /DPublishDir=..\publish\app installer\BurhanScreenCapture.iss
+          if ($LASTEXITCODE -ne 0) { throw "ISCC failed" }
+
+      - name: Portable zip
+        shell: pwsh
+        run: Compress-Archive -Path publish/app/* -DestinationPath artifacts/BurhanScreenCapturePro-Portable-${{ steps.ver.outputs.version }}.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BurhanScreenCapturePro-${{ steps.ver.outputs.version }}
+          path: artifacts/*
+
+      - name: GitHub Release (tags only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*
+          body_path: CHANGELOG.md

@@ -1,0 +1,21 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <SolidColorBrush x:Key="WindowBg" Color="#F3F5F9"/>
+    <SolidColorBrush x:Key="SidebarBg" Color="#EAEEF5"/>
+    <SolidColorBrush x:Key="SurfaceBg" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="SurfaceAltBg" Color="#F7F9FC"/>
+    <SolidColorBrush x:Key="HoverBg" Color="#E6EBF3"/>
+    <SolidColorBrush x:Key="BorderBrushSoft" Color="#DDE3EC"/>
+    <SolidColorBrush x:Key="TextPrimary" Color="#141821"/>
+    <SolidColorBrush x:Key="TextSecondary" Color="#5B6476"/>
+    <SolidColorBrush x:Key="Accent" Color="#1463E6"/>
+    <SolidColorBrush x:Key="AccentHover" Color="#0F55CC"/>
+    <SolidColorBrush x:Key="AccentSoft" Color="#E3EDFF"/>
+    <SolidColorBrush x:Key="OnAccent" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="Danger" Color="#E5484D"/>
+    <SolidColorBrush x:Key="Success" Color="#2FB36B"/>
+    <SolidColorBrush x:Key="ProGold" Color="#F5A623"/>
+    <SolidColorBrush x:Key="ProGoldSoft" Color="#FFF4E0"/>
+    <SolidColorBrush x:Key="OverlayBg" Color="#99000000"/>
+    <Color x:Key="ShadowColor">#22000000</Color>
+</ResourceDictionary>

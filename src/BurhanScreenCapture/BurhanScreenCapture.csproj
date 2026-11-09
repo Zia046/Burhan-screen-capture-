@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <RootNamespace>BurhanScreenCapture</RootNamespace>
+    <AssemblyName>BurhanScreenCapture</AssemblyName>
+    <AssemblyTitle>Burhan Screen Capture Pro</AssemblyTitle>
+    <Description>Screenshot capture, screen recording, audio recording and image editing by Burhan Nexus.</Description>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+    <PlatformTarget>x64</PlatformTarget>
+    <Platforms>x64</Platforms>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>false</SelfContained>
+    <Nullable>enable</Nullable>
+    <!-- Smaller memory footprint for 4 GB machines -->
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
+    <TieredPGO>true</TieredPGO>
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+    <DefineConstants>$(DefineConstants);LICENSE_DEV_KEYS</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Media Foundation based H.264/AAC recorder with WASAPI loopback + microphone mixing (MIT). Requires VC++ 2015-2022 x64 runtime. -->
+    <PackageReference Include="ScreenRecorderLib" Version="7.0.1" />
+    <!-- Audio endpoint enumeration and peak meters (MIT). -->
+    <PackageReference Include="NAudio.Wasapi" Version="2.2.1" />
+    <!-- Windows DPAPI for protecting the stored license on this user account. -->
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BurhanScreenCapture.Licensing\BurhanScreenCapture.Licensing.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\logo.png" />
+    <Resource Include="Assets\app.ico" />
+    <SplashScreen Include="Assets\splash.png" />
+    <EmbeddedResource Include="Licensing\ProductionPublicKey.txt" LogicalName="ProductionPublicKey.txt" />
+    <EmbeddedResource Include="..\..\tools\LicenseGenerator\dev-keys\dev-test-public.txt" LogicalName="DevPublicKey.txt" Condition="'$(Configuration)'=='Debug'" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,93 @@
+<UserControl x:Class="BurhanScreenCapture.Views.Pages.QuickToolsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:BurhanScreenCapture.Controls">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="32,28,32,28" MaxWidth="980" HorizontalAlignment="Left">
+            <TextBlock Text="Quick Tools" Style="{StaticResource H1}"/>
+            <TextBlock Text="Handy shortcuts and productivity tools." Style="{StaticResource Muted}" Margin="0,0,0,20"/>
+
+            <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock Text="Everyday" Style="{StaticResource H2}"/>
+                    <WrapPanel>
+                        <Button Margin="0,0,10,10" Click="OnToolbar" Content="Show quick toolbar"/>
+                        <Button Margin="0,0,10,10" Click="OnAudioOnly" Content="Record audio only"/>
+                        <Button Margin="0,0,10,10" Click="OnShots" Content="Open screenshots folder"/>
+                        <Button Margin="0,0,10,10" Click="OnRecs" Content="Open recordings folder"/>
+                    </WrapPanel>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                        <TextBlock Text="Extract text (OCR)" Style="{StaticResource H2}" Margin="0"/><c:ProBadge/>
+                    </StackPanel>
+                    <TextBlock Text="Copy text from any part of the screen or from an image. Works offline using Windows OCR." Style="{StaticResource Muted}" Margin="0,0,0,12"/>
+                    <WrapPanel>
+                        <Button Margin="0,0,10,0" Style="{StaticResource PrimaryButton}" Click="OnOcrScreen" Content="Select screen area…"/>
+                        <Button Click="OnOcrFile" Content="From image file…"/>
+                    </WrapPanel>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                        <TextBlock Text="Screenshot template" Style="{StaticResource H2}" Margin="0"/><c:ProBadge/>
+                    </StackPanel>
+                    <TextBlock Text="Put an image on a beautiful gradient background with rounded corners and shadow." Style="{StaticResource Muted}" Margin="0,0,0,12"/>
+                    <Button HorizontalAlignment="Left" Click="OnTemplate" Content="Choose image…"/>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                        <TextBlock Text="Batch image processing" Style="{StaticResource H2}" Margin="0"/><c:ProBadge/>
+                    </StackPanel>
+                    <TextBlock Text="Convert, resize, compress and watermark many images at once. Originals are not changed." Style="{StaticResource Muted}" Margin="0,0,0,12"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="150"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/></Grid.RowDefinitions>
+                        <TextBlock Text="Images" Style="{StaticResource Label}"/>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="0,4">
+                            <Button Content="Choose images…" Click="OnBatchFiles"/>
+                            <TextBlock x:Name="BatchCount" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="10,0,0,0" Text="No images selected"/>
+                        </StackPanel>
+                        <TextBlock Grid.Row="1" Text="Output folder" Style="{StaticResource Label}"/>
+                        <DockPanel Grid.Row="1" Grid.Column="1" Margin="0,4">
+                            <Button DockPanel.Dock="Right" Content="Change…" Margin="8,0,0,0" Click="OnBatchFolder"/>
+                            <TextBox x:Name="BatchFolder" IsReadOnly="True"/>
+                        </DockPanel>
+                        <TextBlock Grid.Row="2" Text="Format &amp; quality" Style="{StaticResource Label}"/>
+                        <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" Margin="0,4">
+                            <ComboBox x:Name="BatchFormat" Width="120" SelectedIndex="1">
+                                <ComboBoxItem Content="PNG"/><ComboBoxItem Content="JPG"/><ComboBoxItem Content="BMP"/><ComboBoxItem Content="TIFF"/>
+                            </ComboBox>
+                            <TextBlock Text="JPG quality" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="16,0,8,0"/>
+                            <Slider x:Name="BatchQuality" Width="140" Minimum="30" Maximum="100" Value="85" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding Value, ElementName=BatchQuality, StringFormat={}{0:0}}" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                        </StackPanel>
+                        <TextBlock Grid.Row="3" Text="Max width (px)" Style="{StaticResource Label}"/>
+                        <StackPanel Grid.Row="3" Grid.Column="1" Orientation="Horizontal" Margin="0,4">
+                            <TextBox x:Name="BatchWidth" Width="90" Text="0"/>
+                            <TextBlock Text="0 = keep original size" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                        </StackPanel>
+                        <TextBlock Grid.Row="4" Text="Extras" Style="{StaticResource Label}"/>
+                        <StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal" Margin="0,4">
+                            <CheckBox x:Name="BatchWatermark" Content="Add watermark" Margin="0,0,16,0"/>
+                            <ComboBox x:Name="BatchTemplate" Width="160"/>
+                        </StackPanel>
+                        <StackPanel Grid.Row="5" Grid.Column="1" Orientation="Horizontal" Margin="0,10,0,0">
+                            <Button x:Name="BatchRun" Style="{StaticResource PrimaryButton}" Content="Process images" Click="OnBatchRun"/>
+                            <ProgressBar x:Name="BatchProgress" Width="220" Margin="14,0,0,0" VerticalAlignment="Center" Visibility="Collapsed"/>
+                            <TextBlock x:Name="BatchStatus" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

@@ -1,0 +1,25 @@
+BURHAN SCREEN CAPTURE PRO — END USER LICENSE AGREEMENT
+
+Copyright (c) 2026 Burhan Nexus. All rights reserved.
+
+1. License. Burhan Nexus grants you a non-exclusive, non-transferable license to install and use
+   Burhan Screen Capture Pro ("the Software"). The Free Edition may be used free of charge, including
+   for commercial purposes. Pro features require a valid paid license or an active trial.
+
+2. Pro licenses. A Pro license is activated on one computer at a time. You may move it to another
+   computer by deactivating it first or by contacting Burhan Nexus support. Monthly and Yearly
+   licenses are valid for their paid period; Lifetime licenses do not expire for the 1.x versions.
+
+3. Restrictions. You may not reverse engineer, decompile, or circumvent the licensing of the
+   Software, or redistribute license keys or license files.
+
+4. Your content. Screenshots and recordings you create belong to you. The Software does not upload
+   your content anywhere. You are responsible for having the right to capture and record content.
+
+5. Third-party components. The Software includes ScreenRecorderLib (MIT License) and NAudio
+   (MIT License).
+
+6. No warranty. The Software is provided "as is" without warranty of any kind. To the maximum
+   extent permitted by law, Burhan Nexus is not liable for any damages arising from its use.
+
+[Placeholder — have this agreement reviewed by a legal professional before commercial sale.]

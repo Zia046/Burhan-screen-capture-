@@ -1,0 +1,12 @@
+bin/
+obj/
+.vs/
+*.user
+*.suo
+artifacts/
+publish/
+TestResults/
+# Never commit production private keys
+*.private.key
+keys/production/
+installer/redist/*.exe

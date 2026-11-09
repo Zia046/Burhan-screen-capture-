@@ -1,0 +1,23 @@
+<Window x:Class="BurhanScreenCapture.Views.CapturePreviewWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Screenshot" Width="440" SizeToContent="Height" ResizeMode="NoResize" Topmost="True"
+        WindowStyle="ToolWindow" ShowInTaskbar="True" Background="{DynamicResource SurfaceBg}"
+        FontFamily="{StaticResource UiFont}" Icon="/BurhanScreenCapture;component/Assets/app.ico">
+    <StackPanel Margin="14">
+        <Border CornerRadius="6" Background="{DynamicResource SurfaceAltBg}" BorderBrush="{DynamicResource BorderBrushSoft}" BorderThickness="1" Padding="4"
+                Cursor="Hand" MouseLeftButtonUp="OnEdit" ToolTip="Click to edit">
+            <Image x:Name="Preview" MaxHeight="260" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"/>
+        </Border>
+        <TextBlock x:Name="Info" Style="{StaticResource Muted}" FontSize="12" Margin="2,8,0,10" TextTrimming="CharacterEllipsis"/>
+        <WrapPanel>
+            <Button Style="{StaticResource PrimaryButton}" Margin="0,0,6,6" Click="OnEdit">
+                <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Icon}" Text="&#xE70F;" FontSize="13" Foreground="White" Margin="0,0,6,0"/><TextBlock Text="Edit"/></StackPanel>
+            </Button>
+            <Button Margin="0,0,6,6" Click="OnCopy" Content="Copy"/>
+            <Button Margin="0,0,6,6" Click="OnSaveAs" Content="Save As…"/>
+            <Button x:Name="FolderBtn" Margin="0,0,6,6" Click="OnFolder" Content="Show in folder"/>
+            <Button x:Name="DeleteBtn" Margin="0,0,6,6" Click="OnDelete" Content="Delete" Foreground="{DynamicResource Danger}"/>
+        </WrapPanel>
+    </StackPanel>
+</Window>

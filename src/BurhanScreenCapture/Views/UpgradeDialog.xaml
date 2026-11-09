@@ -1,0 +1,50 @@
+<Window x:Class="BurhanScreenCapture.Views.UpgradeDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Upgrade to Pro" Width="520" SizeToContent="Height" ResizeMode="NoResize" ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner" Background="{DynamicResource SurfaceBg}" FontFamily="{StaticResource UiFont}">
+    <StackPanel>
+        <Border Padding="24,22">
+            <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                    <GradientStop Color="#1463E6" Offset="0"/>
+                    <GradientStop Color="#00B8D4" Offset="1"/>
+                </LinearGradientBrush>
+            </Border.Background>
+            <StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <Border Background="#F5A623" CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
+                        <TextBlock Text="PRO FEATURE" FontSize="10" FontWeight="Bold" Foreground="#1B1405"/>
+                    </Border>
+                </StackPanel>
+                <TextBlock x:Name="FeatureName" FontSize="22" FontWeight="SemiBold" Foreground="White" Margin="0,10,0,4"/>
+                <TextBlock x:Name="FeatureDesc" FontSize="13.5" Foreground="#E8F2FF" TextWrapping="Wrap"/>
+            </StackPanel>
+        </Border>
+        <StackPanel Margin="24,18,24,22">
+            <ItemsControl x:Name="Benefits" Margin="0,0,0,14">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal" Margin="0,3">
+                            <TextBlock Text="&#xE73E;" FontFamily="{StaticResource IconFont}" Foreground="{DynamicResource Success}" Margin="0,2,10,0"/>
+                            <TextBlock Text="{Binding}" Foreground="{DynamicResource TextPrimary}" TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <TextBlock Text="Choose a plan" Style="{StaticResource H2}" FontSize="14"/>
+            <UniformGrid x:Name="Plans" Columns="3" Margin="-4,0,-4,6"/>
+            <TextBlock x:Name="TrialHint" Style="{StaticResource Muted}" FontSize="12" Margin="0,6,0,0"
+                       Text="Not sure yet? Try every Pro feature free for 7 days."/>
+
+            <DockPanel Margin="0,18,0,0">
+                <Button DockPanel.Dock="Left" Content="Back" Click="OnBack" IsCancel="True"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button x:Name="TrialBtn" Content="Start 7-day trial" Margin="0,0,8,0" Click="OnTrial"/>
+                    <Button Content="Upgrade to Pro" Style="{StaticResource GoldButton}" Click="OnUpgrade" IsDefault="True"/>
+                </StackPanel>
+            </DockPanel>
+        </StackPanel>
+    </StackPanel>
+</Window>
