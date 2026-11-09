@@ -43,7 +43,7 @@ public partial class CapturePage : UserControl, IPage
     private void OnDelay(object sender, RoutedEventArgs e)
     {
         int sec = D10.IsChecked == true ? 10 : D5.IsChecked == true ? 5 : 3;
-        var mode = DelayMode.SelectedIndex switch { 1 => CaptureMode.FullScreen, 2 => CaptureMode.Window, 3 => CaptureMode.AllMonitors, _ => CaptureMode.Region };
+        var mode = DelayMode.SelectedIndex switch { 1 => CaptureKind.FullScreen, 2 => CaptureKind.Window, 3 => CaptureKind.AllMonitors, _ => CaptureKind.Region };
         Workflows.CaptureDelayed(mode, sec);
     }
 

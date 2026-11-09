@@ -41,7 +41,7 @@ public partial class FloatingToolbar : Window
     private void OnArea(object sender, RoutedEventArgs e) => Workflows.CaptureRegion();
     private void OnFull(object sender, RoutedEventArgs e) => Workflows.CaptureFullScreen(null);
     private void OnWindow(object sender, RoutedEventArgs e) => Workflows.CaptureActiveWindow(true);
-    private void OnDelay(object sender, RoutedEventArgs e) => Workflows.CaptureDelayed(CaptureMode.Region, 5);
+    private void OnDelay(object sender, RoutedEventArgs e) => Workflows.CaptureDelayed(CaptureKind.Region, 5);
     private void OnRecord(object sender, RoutedEventArgs e) => RecorderController.ToggleQuick();
     private void OnEditor(object sender, RoutedEventArgs e) => Workflows.OpenEditorEmpty();
     private void OnHome(object sender, RoutedEventArgs e) => App.ShowMainWindow();

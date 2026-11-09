@@ -6,7 +6,7 @@ using BurhanScreenCapture.Views;
 
 namespace BurhanScreenCapture.Services;
 
-public enum CaptureMode { Region, FullScreen, AllMonitors, Window }
+public enum CaptureKind { Region, FullScreen, AllMonitors, Window }
 
 /// <summary>Orchestrates capture → save → clipboard → history → preview/editor.</summary>
 public static class Workflows
@@ -80,7 +80,7 @@ public static class Workflows
         HandleCapture(img);
     });
 
-    public static async void CaptureDelayed(CaptureMode mode, int seconds)
+    public static async void CaptureDelayed(CaptureKind mode, int seconds)
     {
         if (_busy) return;
         _busy = true;
@@ -95,10 +95,10 @@ public static class Workflows
         if (!go) return;
         switch (mode)
         {
-            case CaptureMode.Region: CaptureRegion(); break;
-            case CaptureMode.FullScreen: CaptureFullScreen(null); break;
-            case CaptureMode.AllMonitors: CaptureAllMonitors(); break;
-            case CaptureMode.Window: CaptureActiveWindow(false); break;
+            case CaptureKind.Region: CaptureRegion(); break;
+            case CaptureKind.FullScreen: CaptureFullScreen(null); break;
+            case CaptureKind.AllMonitors: CaptureAllMonitors(); break;
+            case CaptureKind.Window: CaptureActiveWindow(false); break;
         }
     }
 
