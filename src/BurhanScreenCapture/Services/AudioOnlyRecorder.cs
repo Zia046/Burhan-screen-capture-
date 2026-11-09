@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using NAudio.CoreAudioApi;
+using NAudio.MediaFoundation;
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
 
