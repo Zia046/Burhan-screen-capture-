@@ -70,8 +70,8 @@ public partial class EditorWindow : Window
         Layer.Width = _base.PixelWidth;
         Layer.Height = _base.PixelHeight;
         Render();
-        ZoomToFit();
         UpdateUi();
+        Dispatcher.BeginInvoke(ZoomToFit, System.Windows.Threading.DispatcherPriority.Loaded);
     }
 
     private void Snapshot()

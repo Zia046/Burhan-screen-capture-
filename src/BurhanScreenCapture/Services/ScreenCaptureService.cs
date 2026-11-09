@@ -26,6 +26,7 @@ public readonly record struct PixelRect(int X, int Y, int Width, int Height)
 public sealed record MonitorInfo(string DeviceName, PixelRect Bounds, bool IsPrimary, int Index)
 {
     public string Label => $"Monitor {Index + 1}{(IsPrimary ? " (Main)" : "")} — {Bounds.Width}×{Bounds.Height}";
+    public override string ToString() => Label;
 }
 
 /// <summary>GDI based screen capture. Coordinates are physical pixels (the app is Per-Monitor-V2 DPI aware).</summary>

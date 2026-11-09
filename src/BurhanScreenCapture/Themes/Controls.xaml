@@ -133,7 +133,7 @@
         <Setter Property="Padding" Value="18"/>
         <Setter Property="Margin" Value="0,0,14,14"/>
         <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-        <Setter Property="Width" Value="232"/>
+        <Setter Property="Width" Value="214"/>
         <Setter Property="Height" Value="128"/>
     </Style>
 

@@ -51,7 +51,7 @@
                                     <TextBlock Style="{StaticResource Muted}" FontSize="12" Margin="0,4,0,0">
                                         <Run Text="{Binding DateText, Mode=OneWay}"/><Run Text="  •  "/><Run Text="{Binding Format, Mode=OneWay}"/><Run Text="  •  "/><Run Text="{Binding SizeText, Mode=OneWay}"/>
                                     </TextBlock>
-                                    <TextBlock Text="{Binding Folder}" Style="{StaticResource Muted}" FontSize="12" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Text="{Binding Folder}" Style="{StaticResource Muted}" FontSize="12" Margin="0,2,0,0" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" ToolTip="{Binding FilePath}"/>
                                 </StackPanel>
                             </DockPanel>
                         </Border>

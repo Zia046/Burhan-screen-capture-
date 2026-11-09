@@ -45,23 +45,26 @@
                 <StackPanel>
                     <TextBlock Text="Audio" Style="{StaticResource H2}"/>
                     <Grid>
-                        <Grid.ColumnDefinitions><ColumnDefinition Width="170"/><ColumnDefinition Width="*"/><ColumnDefinition Width="200"/></Grid.ColumnDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="170"/><ColumnDefinition Width="*"/><ColumnDefinition Width="190"/><ColumnDefinition Width="150"/>
+                        </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions><RowDefinition/><RowDefinition/><RowDefinition/></Grid.RowDefinitions>
-                        <CheckBox x:Name="SysAudio" Style="{StaticResource Switch}" Content="System audio" Click="OnAudioOption" Margin="0,6,24,6"/>
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="Volume" Style="{StaticResource Muted}" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                            <Slider x:Name="SysVol" Width="140" Minimum="0" Maximum="2" Value="1" ValueChanged="OnVolume" VerticalAlignment="Center"/>
+                        <CheckBox x:Name="SysAudio" Style="{StaticResource Switch}" Content="System audio" Click="OnAudioOption" Margin="0,8,24,8"/>
+                        <TextBlock Grid.Column="1" Text="Computer sound (speakers / headphones)" Style="{StaticResource Muted}" VerticalAlignment="Center"/>
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0">
+                            <TextBlock Text="Vol" Style="{StaticResource Muted}" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <Slider x:Name="SysVol" Width="140" Minimum="0" Maximum="2" Value="1" ValueChanged="OnVolume" VerticalAlignment="Center" ToolTip="System audio volume"/>
                         </StackPanel>
-                        <ProgressBar x:Name="SysMeter" Grid.Column="2" Maximum="1" VerticalAlignment="Center" ToolTip="Computer sound level"/>
+                        <ProgressBar x:Name="SysMeter" Grid.Column="3" Maximum="1" VerticalAlignment="Center" ToolTip="Computer sound level"/>
 
-                        <CheckBox x:Name="Mic" Grid.Row="1" Style="{StaticResource Switch}" Content="Microphone" Click="OnAudioOption" Margin="0,6,24,6"/>
-                        <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                            <ComboBox x:Name="MicBox" MinWidth="230" MaxWidth="300" SelectionChanged="OnMicChanged"/>
-                            <TextBlock Text="Volume" Style="{StaticResource Muted}" Margin="12,0,8,0" VerticalAlignment="Center"/>
-                            <Slider x:Name="MicVol" Width="100" Minimum="0" Maximum="2" Value="1" ValueChanged="OnVolume" VerticalAlignment="Center"/>
+                        <CheckBox x:Name="Mic" Grid.Row="1" Style="{StaticResource Switch}" Content="Microphone" Click="OnAudioOption" Margin="0,8,24,8"/>
+                        <ComboBox x:Name="MicBox" Grid.Row="1" Grid.Column="1" SelectionChanged="OnMicChanged" VerticalAlignment="Center"/>
+                        <StackPanel Grid.Row="1" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0">
+                            <TextBlock Text="Vol" Style="{StaticResource Muted}" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <Slider x:Name="MicVol" Width="140" Minimum="0" Maximum="2" Value="1" ValueChanged="OnVolume" VerticalAlignment="Center" ToolTip="Microphone volume"/>
                         </StackPanel>
-                        <ProgressBar x:Name="MicMeter" Grid.Row="1" Grid.Column="2" Maximum="1" VerticalAlignment="Center" ToolTip="Microphone level — speak to test"/>
-                        <TextBlock x:Name="AudioError" Grid.Row="2" Grid.ColumnSpan="3" Foreground="{DynamicResource Danger}" TextWrapping="Wrap" Margin="0,6,0,0" Visibility="Collapsed"/>
+                        <ProgressBar x:Name="MicMeter" Grid.Row="1" Grid.Column="3" Maximum="1" VerticalAlignment="Center" ToolTip="Microphone level — speak to test"/>
+                        <TextBlock x:Name="AudioError" Grid.Row="2" Grid.ColumnSpan="4" Foreground="{DynamicResource Danger}" TextWrapping="Wrap" Margin="0,6,0,0" Visibility="Collapsed"/>
                     </Grid>
                 </StackPanel>
             </Border>

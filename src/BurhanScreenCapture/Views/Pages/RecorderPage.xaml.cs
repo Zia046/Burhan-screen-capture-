@@ -7,7 +7,10 @@ using BurhanScreenCapture.Services;
 
 namespace BurhanScreenCapture.Views.Pages;
 
-public sealed record WindowItem(IntPtr Handle, string Title);
+public sealed record WindowItem(IntPtr Handle, string Title)
+{
+    public override string ToString() => Title;
+}
 
 public partial class RecorderPage : UserControl, IPage
 {
@@ -41,7 +44,11 @@ public partial class RecorderPage : UserControl, IPage
         var mics = AudioDevices.Microphones();
         MicBox.ItemsSource = mics;
         MicBox.SelectedItem = mics.FirstOrDefault(m => m.Id == s.MicrophoneDeviceId) ?? mics.FirstOrDefault();
-        if (mics.Count == 0) MicBox.ItemsSource = new[] { new AudioDeviceItem("", "No microphone found", false) };
+        if (mics.Count == 0)
+        {
+            MicBox.ItemsSource = new[] { new AudioDeviceItem("", "No microphone found", false) };
+            MicBox.SelectedIndex = 0;
+        }
 
         SelectByTag(FpsBox, s.RecordingFps.ToString(), 2);
         QualityBox.SelectedIndex = (int)s.RecordingQuality;
