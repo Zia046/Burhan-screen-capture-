@@ -44,20 +44,9 @@ public partial class MainWindow : Window
     private void UpdateEdition()
     {
         var st = LicenseService.Status;
-        EditionText.Text = st.Edition switch
-        {
-            Edition.Pro => LicensePlanInfo.DisplayName(st.Plan),
-            Edition.ProTrial => "Pro Trial",
-            _ => "Free Edition"
-        };
-        EditionSub.Text = st.Edition switch
-        {
-            Edition.ProTrial => $"{st.DaysLeft(DateTime.UtcNow)} day(s) left",
-            Edition.Pro when st.ExpiresUtc is { } e => $"Valid until {e.ToLocalTime():d}",
-            Edition.Pro => "All Pro features unlocked",
-            _ => "Upgrade for Pro tools"
-        };
-        SidebarUpgrade.Content = st.Edition == Edition.Pro ? "Manage License" : "Upgrade to Pro";
+        EditionText.Text = EditionInfo.Name(st.Edition);
+        EditionSub.Text = st.IsPro ? "Permanently activated" : "Free Forever";
+        SidebarUpgrade.Content = st.IsPro ? "License details" : "Upgrade to Pro";
     }
 
     public void Navigate(string key)

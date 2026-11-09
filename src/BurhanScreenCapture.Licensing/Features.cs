@@ -35,7 +35,7 @@ public static class FeatureCatalog
     public static FeatureTier TierOf(Feature f) => Map[f].Tier;
 
     public static bool IsAllowed(Feature f, Edition edition) =>
-        TierOf(f) == FeatureTier.Free || edition is Edition.Pro or Edition.ProTrial;
+        TierOf(f) == FeatureTier.Free || edition == Edition.LifetimePro;
 
     private static Dictionary<Feature, FeatureInfo> Build()
     {

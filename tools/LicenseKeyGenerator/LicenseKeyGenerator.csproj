@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <RootNamespace>BurhanNexus.LicenseKeyGenerator</RootNamespace>
+    <AssemblyName>BurhanNexusLicenseKeyGenerator</AssemblyName>
+    <AssemblyTitle>Burhan Nexus License Key Generator</AssemblyTitle>
+    <Product>Burhan Nexus License Key Generator</Product>
+    <Description>Administrator tool for issuing and managing Burhan Screen Capture Pro Lifetime licenses.</Description>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <PlatformTarget>x64</PlatformTarget>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\BurhanScreenCapture.Licensing\BurhanScreenCapture.Licensing.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Assets\logo.png" />
+    <Resource Include="Assets\app.ico" />
+    <!-- Same look as Burhan Screen Capture Pro -->
+    <Page Include="..\..\src\BurhanScreenCapture\Themes\Light.xaml" Link="Themes\Light.xaml" />
+    <Page Include="..\..\src\BurhanScreenCapture\Themes\Controls.xaml" Link="Themes\Controls.xaml" />
+  </ItemGroup>
+</Project>

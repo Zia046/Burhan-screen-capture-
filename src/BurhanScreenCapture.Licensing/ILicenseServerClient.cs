@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace BurhanScreenCapture.Licensing;
 
-public sealed record ActivationResult(bool Success, SignedLicense? License, string Message);
+public sealed record ActivationResult(bool Success, string? LicenseKey, string Message);
 
 /// <summary>
 /// Contract with the Burhan Nexus licensing server. See docs/LICENSING.md for the HTTP API.
@@ -12,7 +12,8 @@ public interface ILicenseServerClient
 {
     bool IsConfigured { get; }
     Task<ActivationResult> ActivateAsync(string licenseKey, string deviceId, string deviceName, CancellationToken ct = default);
-    Task<ActivationResult> RefreshAsync(string licenseKey, string deviceId, CancellationToken ct = default);
+    /// <summary>Signed revocation list text (see RevocationList), or null when unavailable.</summary>
+    Task<string?> GetRevocationListAsync(CancellationToken ct = default);
     Task<bool> DeactivateAsync(string licenseKey, string deviceId, CancellationToken ct = default);
 }
 
@@ -37,21 +38,26 @@ public sealed class HttpLicenseServerClient : ILicenseServerClient
         [JsonPropertyName("licenseKey")] public string LicenseKey { get; set; } = "";
         [JsonPropertyName("deviceId")] public string DeviceId { get; set; } = "";
         [JsonPropertyName("deviceName")] public string DeviceName { get; set; } = "";
-        [JsonPropertyName("product")] public string Product { get; set; } = LicenseData.ProductCode;
+        [JsonPropertyName("product")] public string Product { get; set; } = "BNX-SC-PRO";
     }
 
     private sealed class Response
     {
         [JsonPropertyName("ok")] public bool Ok { get; set; }
         [JsonPropertyName("message")] public string? Message { get; set; }
-        [JsonPropertyName("license")] public SignedLicense? License { get; set; }
+        /// <summary>A device-bound license key signed by the server (same format the generator produces).</summary>
+        [JsonPropertyName("licenseKey")] public string? LicenseKey { get; set; }
     }
 
     public Task<ActivationResult> ActivateAsync(string licenseKey, string deviceId, string deviceName, CancellationToken ct = default) =>
         PostAsync("v1/activate", new Request { LicenseKey = licenseKey, DeviceId = deviceId, DeviceName = deviceName }, ct);
 
-    public Task<ActivationResult> RefreshAsync(string licenseKey, string deviceId, CancellationToken ct = default) =>
-        PostAsync("v1/refresh", new Request { LicenseKey = licenseKey, DeviceId = deviceId }, ct);
+    public async Task<string?> GetRevocationListAsync(CancellationToken ct = default)
+    {
+        if (_baseUri is null) return null;
+        try { return await _http.GetStringAsync(new Uri(_baseUri, "v1/revocations"), ct).ConfigureAwait(false); }
+        catch { return null; }
+    }
 
     public async Task<bool> DeactivateAsync(string licenseKey, string deviceId, CancellationToken ct = default)
     {
@@ -69,7 +75,7 @@ public sealed class HttpLicenseServerClient : ILicenseServerClient
             var data = await resp.Content.ReadFromJsonAsync<Response>(cancellationToken: ct).ConfigureAwait(false);
             if (!resp.IsSuccessStatusCode || data is null || !data.Ok)
                 return new(false, null, data?.Message ?? $"The licensing server rejected the request ({(int)resp.StatusCode}).");
-            return new(true, data.License, data.Message ?? "Activated.");
+            return new(true, data.LicenseKey, data.Message ?? "Activated.");
         }
         catch (HttpRequestException)
         {

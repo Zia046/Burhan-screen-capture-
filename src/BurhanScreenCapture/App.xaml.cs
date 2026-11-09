@@ -61,7 +61,8 @@ public partial class App : Application
             MainWindow = new MainWindow();
             Dispatcher.BeginInvoke(async () =>
             {
-                int code = await SelfTest.RunAsync(e.Args[selfTestIdx + 1], Arg("--license"), Arg("--expired"));
+                int code = await SelfTest.RunAsync(e.Args[selfTestIdx + 1], Arg("--key-file"), Arg("--wrong-device-key-file"),
+                    Arg("--revocations"), e.Args.Contains("--phase2"));
                 Shutdown(code);
             });
             return;
@@ -81,7 +82,7 @@ public partial class App : Application
         if (SettingsService.Current.ShowFloatingToolbar) FloatingToolbar.ShowToolbar();
         if (FailedHotkeys.Count > 0) Tray.Notify("Some shortcuts are in use", HotkeyHint());
 
-        _ = LicenseService.RefreshIfDueAsync();
+        _ = LicenseService.RefreshRevocationsAsync();
     }
 
     public static string HotkeyHint() =>

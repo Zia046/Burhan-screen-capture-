@@ -2,54 +2,113 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Margin="32,28,32,28" MaxWidth="960" HorizontalAlignment="Left">
-            <TextBlock Text="Upgrade to Pro" Style="{StaticResource H1}"/>
-            <TextBlock Text="Everything in Free stays free forever. Pro adds advanced tools for professionals." Style="{StaticResource Muted}" Margin="0,0,0,20"/>
+        <StackPanel Margin="32,28,32,28" MaxWidth="980" HorizontalAlignment="Left">
+            <TextBlock x:Name="PageTitle" Text="Upgrade to Pro" Style="{StaticResource H1}"/>
+            <TextBlock Text="Two simple choices. No subscriptions, no renewals." Style="{StaticResource Muted}" FontSize="14" Margin="0,0,0,20"/>
 
-            <!-- Status -->
-            <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+            <!-- Activated status (Lifetime Pro) -->
+            <Border x:Name="ActiveCard" Style="{StaticResource Card}" BorderBrush="{DynamicResource Success}" BorderThickness="2" Margin="0,0,0,18" Visibility="Collapsed">
                 <Grid>
                     <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                     <StackPanel>
-                        <TextBlock Text="License status" Style="{StaticResource Muted}"/>
-                        <TextBlock x:Name="StatusTitle" FontSize="20" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" Margin="0,2,0,2"/>
-                        <TextBlock x:Name="StatusDetail" Style="{StaticResource Muted}"/>
-                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-                            <TextBlock Text="Device ID:" Style="{StaticResource Label}" Margin="0,0,8,0"/>
-                            <TextBox x:Name="DeviceId" IsReadOnly="True" Width="190" FontFamily="Consolas"/>
-                            <Button Content="Copy" Margin="8,0,0,0" Click="OnCopyDevice"/>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE930;" FontFamily="{StaticResource IconFont}" FontSize="22" Foreground="{DynamicResource Success}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <TextBlock Text="LICENSE STATUS: LIFETIME PRO ACTIVATED" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource Success}" VerticalAlignment="Center"/>
                         </StackPanel>
+                        <Grid Margin="0,14,0,0">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="150"/><ColumnDefinition/></Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/></Grid.RowDefinitions>
+                            <TextBlock Text="License Type" Style="{StaticResource Muted}" Margin="0,3"/>
+                            <TextBlock Grid.Column="1" Text="Lifetime" Style="{StaticResource Label}" FontWeight="SemiBold" Margin="0,3"/>
+                            <TextBlock Grid.Row="1" Text="License" Style="{StaticResource Muted}" Margin="0,3"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" Text="Permanently Activated — never expires" Style="{StaticResource Label}" Margin="0,3"/>
+                            <TextBlock Grid.Row="2" Text="Activation Date" Style="{StaticResource Muted}" Margin="0,3"/>
+                            <TextBlock x:Name="ActDate" Grid.Row="2" Grid.Column="1" Style="{StaticResource Label}" Margin="0,3"/>
+                            <TextBlock Grid.Row="3" Text="License ID" Style="{StaticResource Muted}" Margin="0,3"/>
+                            <TextBox x:Name="ActId" Grid.Row="3" Grid.Column="1" IsReadOnly="True" FontFamily="Consolas" Width="260" HorizontalAlignment="Left" Margin="0,3"/>
+                            <TextBlock Grid.Row="4" Text="Device" Style="{StaticResource Muted}" Margin="0,3"/>
+                            <TextBlock x:Name="ActDevice" Grid.Row="4" Grid.Column="1" Style="{StaticResource Label}" Margin="0,3"/>
+                        </Grid>
                     </StackPanel>
-                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                        <Button x:Name="TrialBtn" Content="Start 7-day free trial" Style="{StaticResource GoldButton}" Click="OnTrial" Margin="0,0,0,8"/>
-                        <Button x:Name="DeactivateBtn" Content="Deactivate / transfer" Click="OnDeactivate"/>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Top">
+                        <Button Content="Deactivate / transfer" Click="OnDeactivate"/>
                     </StackPanel>
                 </Grid>
             </Border>
 
-            <!-- Activate -->
-            <Border Style="{StaticResource Card}" Margin="0,0,0,16">
-                <StackPanel>
-                    <TextBlock Text="Activate Pro" Style="{StaticResource H2}"/>
-                    <TextBlock Text="Enter the license key from your purchase email, or import the license file you received." Style="{StaticResource Muted}" Margin="0,0,0,12"/>
-                    <StackPanel Orientation="Horizontal">
-                        <TextBox x:Name="KeyBox" Width="330" FontFamily="Consolas" ToolTip="BSCP-XXXXX-XXXXX-XXXXX-XXXXX"/>
-                        <Button x:Name="ActivateBtn" Content="Activate" Style="{StaticResource PrimaryButton}" Margin="8,0,0,0" Click="OnActivate"/>
-                        <Button Content="Import license file…" Margin="8,0,0,0" Click="OnImport"/>
-                    </StackPanel>
-                    <TextBlock x:Name="ActivateMsg" TextWrapping="Wrap" Margin="0,10,0,0"/>
-                </StackPanel>
+            <!-- Problem with a stored license -->
+            <Border x:Name="ProblemCard" Style="{StaticResource Card}" BorderBrush="{DynamicResource Danger}" Margin="0,0,0,18" Visibility="Collapsed">
+                <TextBlock x:Name="ProblemText" Foreground="{DynamicResource Danger}" TextWrapping="Wrap"/>
             </Border>
 
-            <!-- Plans -->
-            <TextBlock Text="Plans" Style="{StaticResource H2}" Margin="0,4,0,10"/>
-            <UniformGrid x:Name="PlanCards" Columns="3" Margin="-6,0,-6,8"/>
-            <Button Content="Buy Pro" Style="{StaticResource GoldButton}" HorizontalAlignment="Left" Padding="22,9" Click="OnBuy" Margin="0,4,0,20"/>
+            <!-- The two options -->
+            <Grid x:Name="Options" Margin="0,0,0,18">
+                <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="18"/><ColumnDefinition/></Grid.ColumnDefinitions>
 
-            <!-- Comparison -->
+                <Border Style="{StaticResource Card}" Padding="24">
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Top">
+                            <TextBlock Text="FREE EDITION" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource Accent}"/>
+                            <TextBlock Text="Free" FontSize="32" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" Margin="0,6,0,0"/>
+                            <TextBlock Text="Free Forever • no payment • no key • never expires" Style="{StaticResource Muted}" Margin="0,2,0,16"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,4"><TextBlock Text="&#xE73E;" FontFamily="{StaticResource IconFont}" Foreground="{DynamicResource Success}" Margin="0,2,10,0"/><TextBlock Text="Free Forever" Foreground="{DynamicResource TextPrimary}"/></StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,4"><TextBlock Text="&#xE73E;" FontFamily="{StaticResource IconFont}" Foreground="{DynamicResource Success}" Margin="0,2,10,0"/><TextBlock Text="Basic Screenshot Tools" Foreground="{DynamicResource TextPrimary}"/></StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,4"><TextBlock Text="&#xE73E;" FontFamily="{StaticResource IconFont}" Foreground="{DynamicResource Success}" Margin="0,2,10,0"/><TextBlock Text="Screen Recording (no watermark, no time limit)" Foreground="{DynamicResource TextPrimary}"/></StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,4"><TextBlock Text="&#xE73E;" FontFamily="{StaticResource IconFont}" Foreground="{DynamicResource Success}" Margin="0,2,10,0"/><TextBlock Text="System Audio Recording" Foreground="{DynamicResource TextPrimary}"/></StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,4"><TextBlock Text="&#xE73E;" FontFamily="{StaticResource IconFont}" Foreground="{DynamicResource Success}" Margin="0,2,10,0"/><TextBlock Text="Microphone Recording" Foreground="{DynamicResource TextPrimary}"/></StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,4"><TextBlock Text="&#xE73E;" FontFamily="{StaticResource IconFont}" Foreground="{DynamicResource Success}" Margin="0,2,10,0"/><TextBlock Text="Basic Image Editing" Foreground="{DynamicResource TextPrimary}"/></StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,4"><TextBlock Text="&#xE73E;" FontFamily="{StaticResource IconFont}" Foreground="{DynamicResource Success}" Margin="0,2,10,0"/><TextBlock Text="PNG &amp; JPG export, history (latest 20)" Foreground="{DynamicResource TextPrimary}"/></StackPanel>
+                        </StackPanel>
+                        <Button x:Name="FreeBtn" DockPanel.Dock="Bottom" Content="Continue with Free" Margin="0,20,0,0" Padding="14,10" Click="OnContinueFree" VerticalAlignment="Bottom"/>
+                        <Border/>
+                    </DockPanel>
+                </Border>
+
+                <Border Grid.Column="2" Style="{StaticResource Card}" Padding="24" BorderBrush="{DynamicResource ProGold}" BorderThickness="2">
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Top">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="LIFETIME PRO" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource ProGold}" VerticalAlignment="Center"/>
+                                <Border Background="{DynamicResource ProGold}" CornerRadius="4" Padding="6,1" Margin="10,0,0,0">
+                                    <TextBlock Text="ONE-TIME PURCHASE" FontSize="10" FontWeight="Bold" Foreground="#1B1405"/>
+                                </Border>
+                            </StackPanel>
+                            <TextBlock Text="Pay once" FontSize="32" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" Margin="0,6,0,0"/>
+                            <TextBlock Text="Lifetime access • no monthly or yearly payments" Style="{StaticResource Muted}" Margin="0,2,0,16"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,4"><TextBlock Text="&#xE73E;" FontFamily="{StaticResource IconFont}" Foreground="{DynamicResource ProGold}" Margin="0,2,10,0"/><TextBlock Text="One-Time Purchase, Lifetime Access" Foreground="{DynamicResource TextPrimary}"/></StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,4"><TextBlock Text="&#xE73E;" FontFamily="{StaticResource IconFont}" Foreground="{DynamicResource ProGold}" Margin="0,2,10,0"/><TextBlock Text="Scrolling Screenshot" Foreground="{DynamicResource TextPrimary}"/></StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,4"><TextBlock Text="&#xE73E;" FontFamily="{StaticResource IconFont}" Foreground="{DynamicResource ProGold}" Margin="0,2,10,0"/><TextBlock Text="GIF Recording" Foreground="{DynamicResource TextPrimary}"/></StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,4"><TextBlock Text="&#xE73E;" FontFamily="{StaticResource IconFont}" Foreground="{DynamicResource ProGold}" Margin="0,2,10,0"/><TextBlock Text="Advanced Blur and Pixelate" Foreground="{DynamicResource TextPrimary}"/></StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,4"><TextBlock Text="&#xE73E;" FontFamily="{StaticResource IconFont}" Foreground="{DynamicResource ProGold}" Margin="0,2,10,0"/><TextBlock Text="OCR — extract text from images" Foreground="{DynamicResource TextPrimary}"/></StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,4"><TextBlock Text="&#xE73E;" FontFamily="{StaticResource IconFont}" Foreground="{DynamicResource ProGold}" Margin="0,2,10,0"/><TextBlock Text="Advanced Image Editing (magnifier, spotlight, steps…)" Foreground="{DynamicResource TextPrimary}"/></StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,4"><TextBlock Text="&#xE73E;" FontFamily="{StaticResource IconFont}" Foreground="{DynamicResource ProGold}" Margin="0,2,10,0"/><TextBlock Text="Batch Image Processing" Foreground="{DynamicResource TextPrimary}"/></StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,4"><TextBlock Text="&#xE73E;" FontFamily="{StaticResource IconFont}" Foreground="{DynamicResource ProGold}" Margin="0,2,10,0"/><TextBlock Text="Unlimited Screenshot History + search" Foreground="{DynamicResource TextPrimary}"/></StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,4"><TextBlock Text="&#xE73E;" FontFamily="{StaticResource IconFont}" Foreground="{DynamicResource ProGold}" Margin="0,2,10,0"/><TextBlock Text="Advanced Export Options" Foreground="{DynamicResource TextPrimary}"/></StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,4"><TextBlock Text="&#xE73E;" FontFamily="{StaticResource IconFont}" Foreground="{DynamicResource ProGold}" Margin="0,2,10,0"/><TextBlock Text="All other Pro features" Foreground="{DynamicResource TextPrimary}"/></StackPanel>
+                        </StackPanel>
+                        <StackPanel x:Name="ProButtons" DockPanel.Dock="Bottom" Margin="0,20,0,0" VerticalAlignment="Bottom">
+                            <Button Content="Purchase Lifetime License" Style="{StaticResource GoldButton}" Padding="14,10" Click="OnPurchase"/>
+                            <Button Content="Enter License Key" Margin="0,8,0,0" Padding="14,10" Click="OnEnterKey"/>
+                        </StackPanel>
+                        <Border/>
+                    </DockPanel>
+                </Border>
+            </Grid>
+
+            <Border Style="{StaticResource Card}" Margin="0,0,0,18">
+                <DockPanel>
+                    <Button DockPanel.Dock="Right" Content="Copy" VerticalAlignment="Center" Click="OnCopyDevice"/>
+                    <StackPanel>
+                        <TextBlock Text="This computer" Style="{StaticResource H2}" Margin="0,0,0,4"/>
+                        <TextBlock x:Name="DeviceText" Style="{StaticResource Muted}" FontFamily="Consolas"/>
+                        <TextBlock Text="Send this Device ID when you purchase, so your license key is issued for this computer." Style="{StaticResource Muted}" FontSize="12" Margin="0,4,0,0"/>
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
             <Border Style="{StaticResource Card}">
                 <StackPanel>
-                    <TextBlock Text="Free vs Pro" Style="{StaticResource H2}"/>
+                    <TextBlock Text="Free vs Lifetime Pro" Style="{StaticResource H2}"/>
                     <Grid x:Name="Compare"/>
                 </StackPanel>
             </Border>

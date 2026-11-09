@@ -50,7 +50,7 @@
                         </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions><RowDefinition/><RowDefinition/><RowDefinition/></Grid.RowDefinitions>
                         <CheckBox x:Name="SysAudio" Style="{StaticResource Switch}" Content="System audio" Click="OnAudioOption" Margin="0,8,24,8"/>
-                        <TextBlock Grid.Column="1" Text="Computer sound (speakers / headphones)" Style="{StaticResource Muted}" VerticalAlignment="Center"/>
+                        <ComboBox x:Name="SpeakerBox" Grid.Column="1" SelectionChanged="OnSpeakerChanged" VerticalAlignment="Center" ToolTip="Which speakers / headphones to record"/>
                         <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0">
                             <TextBlock Text="Vol" Style="{StaticResource Muted}" Margin="0,0,6,0" VerticalAlignment="Center"/>
                             <Slider x:Name="SysVol" Width="140" Minimum="0" Maximum="2" Value="1" ValueChanged="OnVolume" VerticalAlignment="Center" ToolTip="System audio volume"/>

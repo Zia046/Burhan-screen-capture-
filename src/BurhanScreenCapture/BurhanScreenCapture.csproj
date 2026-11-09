@@ -28,7 +28,6 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">
-    <DefineConstants>$(DefineConstants);LICENSE_DEV_KEYS</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
@@ -49,6 +48,9 @@
     <Resource Include="Assets\app.ico" />
     <SplashScreen Include="Assets\splash.png" />
     <EmbeddedResource Include="Licensing\ProductionPublicKey.txt" LogicalName="ProductionPublicKey.txt" />
+    <EmbeddedResource Include="Licensing\RevokedLicenses.txt" LogicalName="RevokedLicenses.txt" />
     <EmbeddedResource Include="..\..\tools\LicenseGenerator\dev-keys\dev-test-public.txt" LogicalName="DevPublicKey.txt" Condition="'$(Configuration)'=='Debug'" />
+    <!-- CI only: dotnet publish -p:TestPublicKeyFile=... builds a separate test copy that also trusts a test key. -->
+    <EmbeddedResource Include="$(TestPublicKeyFile)" LogicalName="TestPublicKey.txt" Condition="'$(TestPublicKeyFile)' != ''" />
   </ItemGroup>
 </Project>

@@ -49,7 +49,7 @@ public partial class RecordingBarWindow : Window
         Time.Text = RecorderController.Elapsed.ToString(@"hh\:mm\:ss");
         if (++_tick % 5 == 0) Dot.Opacity = RecorderController.IsPaused ? 0.35 : (Dot.Opacity < 1 ? 1 : 0.55);
         var s = SettingsService.Current;
-        if (s.RecordSystemAudio) { _sysPeak = Math.Max(_audio.SystemPeak(), _sysPeak * 0.8f); SysMeter.Value = _sysPeak; }
+        if (s.RecordSystemAudio) { _sysPeak = Math.Max(_audio.SystemPeak(s.SystemAudioDeviceId), _sysPeak * 0.8f); SysMeter.Value = _sysPeak; }
         if (s.RecordMicrophone) { _micPeak = Math.Max(_audio.MicPeak(s.MicrophoneDeviceId), _micPeak * 0.8f); MicMeter.Value = _micPeak; }
         SysMeter.Foreground = _sysPeak > 0.97f ? System.Windows.Media.Brushes.OrangeRed : System.Windows.Media.Brushes.MediumSeaGreen;
         MicMeter.Foreground = _micPeak > 0.97f ? System.Windows.Media.Brushes.OrangeRed : System.Windows.Media.Brushes.MediumSeaGreen;

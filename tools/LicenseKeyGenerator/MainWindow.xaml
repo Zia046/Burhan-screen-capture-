@@ -1,0 +1,235 @@
+<Window x:Class="BurhanNexus.LicenseKeyGenerator.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Burhan Nexus License Key Generator" Width="1180" Height="740" MinWidth="960" MinHeight="600"
+        WindowStartupLocation="CenterScreen" Background="{DynamicResource WindowBg}" FontFamily="{StaticResource UiFont}"
+        Icon="/BurhanNexusLicenseKeyGenerator;component/Assets/app.ico" UseLayoutRounding="True">
+    <Grid>
+        <!-- ============ Main UI ============ -->
+        <Grid x:Name="MainUi" Visibility="Collapsed">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="230"/><ColumnDefinition/></Grid.ColumnDefinitions>
+            <Border Background="{DynamicResource SidebarBg}" BorderBrush="{DynamicResource BorderBrushSoft}" BorderThickness="0,0,1,0">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="18,20,12,18">
+                        <Image Source="/BurhanNexusLicenseKeyGenerator;component/Assets/logo.png" Width="36" Height="36"/>
+                        <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Text="Burhan Nexus" FontWeight="SemiBold" FontSize="14" Foreground="{DynamicResource TextPrimary}"/>
+                            <TextBlock Text="License Key Generator" FontSize="12" Foreground="{DynamicResource Accent}"/>
+                        </StackPanel>
+                    </StackPanel>
+                    <Border DockPanel.Dock="Bottom" Margin="12" Padding="12" CornerRadius="8" Background="{DynamicResource ProGoldSoft}">
+                        <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource TextPrimary}"
+                                   Text="Administrator tool. Never give this program, your password or the signing key to customers."/>
+                    </Border>
+                    <StackPanel x:Name="Nav">
+                        <RadioButton Style="{StaticResource NavButton}" Tag="Generate" Checked="OnNav" IsChecked="True">
+                            <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Icon}" Text="&#xE8D7;" Width="28"/><TextBlock Text="Generate New License"/></StackPanel>
+                        </RadioButton>
+                        <RadioButton Style="{StaticResource NavButton}" Tag="Licenses" Checked="OnNav">
+                            <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Icon}" Text="&#xE81C;" Width="28"/><TextBlock Text="License History"/></StackPanel>
+                        </RadioButton>
+                        <RadioButton Style="{StaticResource NavButton}" Tag="Revocations" Checked="OnNav">
+                            <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Icon}" Text="&#xE7BA;" Width="28"/><TextBlock Text="Revocations"/></StackPanel>
+                        </RadioButton>
+                        <RadioButton Style="{StaticResource NavButton}" Tag="Keys" Checked="OnNav">
+                            <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Icon}" Text="&#xE72E;" Width="28"/><TextBlock Text="Signing Key &amp; Backup"/></StackPanel>
+                        </RadioButton>
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
+            <!-- Generate -->
+            <ScrollViewer x:Name="PageGenerate" Grid.Column="1" VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="32,28,32,28" MaxWidth="900" HorizontalAlignment="Left">
+                    <TextBlock Text="Generate New License" Style="{StaticResource H1}"/>
+                    <TextBlock Text="Creates a signed Lifetime Pro license key for Burhan Screen Capture Pro." Style="{StaticResource Muted}" Margin="0,0,0,18"/>
+                    <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="190"/><ColumnDefinition/></Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/></Grid.RowDefinitions>
+                            <TextBlock Text="Customer Name *" Style="{StaticResource Label}"/>
+                            <TextBox x:Name="GCustomer" Grid.Column="1" Margin="0,5"/>
+                            <TextBlock Grid.Row="1" Text="Customer Email (optional)" Style="{StaticResource Label}"/>
+                            <TextBox x:Name="GEmail" Grid.Row="1" Grid.Column="1" Margin="0,5"/>
+                            <TextBlock Grid.Row="2" Text="Product Name" Style="{StaticResource Label}"/>
+                            <ComboBox Grid.Row="2" Grid.Column="1" Margin="0,5" SelectedIndex="0" HorizontalAlignment="Left" Width="280">
+                                <ComboBoxItem Content="Burhan Screen Capture Pro"/>
+                            </ComboBox>
+                            <TextBlock Grid.Row="3" Text="License Type" Style="{StaticResource Label}"/>
+                            <ComboBox Grid.Row="3" Grid.Column="1" Margin="0,5" SelectedIndex="0" HorizontalAlignment="Left" Width="280">
+                                <ComboBoxItem Content="Lifetime Pro (one-time, never expires)"/>
+                            </ComboBox>
+                            <TextBlock Grid.Row="4" Text="Customer Device ID" Style="{StaticResource Label}"/>
+                            <StackPanel Grid.Row="4" Grid.Column="1" Margin="0,5">
+                                <TextBox x:Name="GDevice" FontFamily="Consolas" Width="280" HorizontalAlignment="Left"/>
+                                <TextBlock Style="{StaticResource Muted}" FontSize="12" Margin="0,4,0,0"
+                                           Text="Recommended. From the customer's Upgrade page. The key will then only work on that computer. Leave empty for a key that is not device-locked."/>
+                            </StackPanel>
+                            <TextBlock Grid.Row="5" Text="Device Limit" Style="{StaticResource Label}"/>
+                            <StackPanel Grid.Row="5" Grid.Column="1" Orientation="Horizontal" Margin="0,5">
+                                <TextBox x:Name="GLimit" Text="1" Width="60"/>
+                                <TextBlock Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="10,0,0,0" Text="Recorded in the license; enforced by an activation server if you add one."/>
+                            </StackPanel>
+                            <TextBlock Grid.Row="6" Text="Notes" Style="{StaticResource Label}"/>
+                            <TextBox x:Name="GNotes" Grid.Row="6" Grid.Column="1" Margin="0,5"/>
+                            <StackPanel Grid.Row="7" Grid.Column="1" Orientation="Horizontal" Margin="0,12,0,0">
+                                <Button Content="Generate License" Style="{StaticResource PrimaryButton}" Padding="20,9" Click="OnGenerate"/>
+                                <Button Content="Clear" Margin="8,0,0,0" Click="OnClearForm"/>
+                                <TextBlock x:Name="GError" Foreground="{DynamicResource Danger}" VerticalAlignment="Center" Margin="12,0,0,0" TextWrapping="Wrap" MaxWidth="400"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <Border x:Name="ResultCard" Style="{StaticResource Card}" BorderBrush="{DynamicResource Success}" BorderThickness="2" Visibility="Collapsed">
+                        <StackPanel>
+                            <TextBlock Text="License generated" Style="{StaticResource H2}" Foreground="{DynamicResource Success}"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="190"/><ColumnDefinition/></Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/></Grid.RowDefinitions>
+                                <TextBlock Text="License ID" Style="{StaticResource Muted}" Margin="0,4"/>
+                                <TextBlock x:Name="RId" Grid.Column="1" Style="{StaticResource Label}" FontFamily="Consolas" FontWeight="SemiBold" Margin="0,4"/>
+                                <TextBlock Grid.Row="1" Text="Customer" Style="{StaticResource Muted}" Margin="0,4"/>
+                                <TextBlock x:Name="RCustomer" Grid.Row="1" Grid.Column="1" Style="{StaticResource Label}" Margin="0,4"/>
+                                <TextBlock Grid.Row="2" Text="Creation Date" Style="{StaticResource Muted}" Margin="0,4"/>
+                                <TextBlock x:Name="RDate" Grid.Row="2" Grid.Column="1" Style="{StaticResource Label}" Margin="0,4"/>
+                                <TextBlock Grid.Row="3" Text="Activation Status" Style="{StaticResource Muted}" Margin="0,4"/>
+                                <TextBlock x:Name="RStatus" Grid.Row="3" Grid.Column="1" Style="{StaticResource Label}" Margin="0,4"/>
+                                <TextBlock Grid.Row="4" Text="License Key" Style="{StaticResource Muted}" Margin="0,4"/>
+                                <TextBox x:Name="RKey" Grid.Row="4" Grid.Column="1" IsReadOnly="True" TextWrapping="Wrap" Height="90" FontFamily="Consolas" Margin="0,4"
+                                         VerticalContentAlignment="Top"/>
+                            </Grid>
+                            <StackPanel Orientation="Horizontal" Margin="190,10,0,0">
+                                <Button Content="Copy License Key" Style="{StaticResource PrimaryButton}" Click="OnCopyKey"/>
+                                <Button Content="Copy customer message" Margin="8,0,0,0" Click="OnCopyMessage"/>
+                                <Button Content="Export License…" Margin="8,0,0,0" Click="OnExportLicense"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Licenses -->
+            <DockPanel x:Name="PageLicenses" Grid.Column="1" Margin="32,28,24,20" Visibility="Collapsed">
+                <DockPanel DockPanel.Dock="Top" Margin="0,0,0,14">
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBox x:Name="Search" Width="260" TextChanged="OnSearch" ToolTip="Search by name, email, license ID, device ID or key"/>
+                        <Button Content="Export CSV…" Margin="8,0,0,0" Click="OnExportCsv"/>
+                    </StackPanel>
+                    <StackPanel>
+                        <TextBlock Text="License History" Style="{StaticResource H1}"/>
+                        <TextBlock x:Name="CountText" Style="{StaticResource Muted}"/>
+                    </StackPanel>
+                </DockPanel>
+                <Border x:Name="Detail" DockPanel.Dock="Bottom" Style="{StaticResource Card}" Margin="0,12,0,0" Visibility="Collapsed">
+                    <StackPanel>
+                        <TextBlock x:Name="DTitle" Style="{StaticResource H2}"/>
+                        <TextBlock x:Name="DInfo" Style="{StaticResource Muted}" TextWrapping="Wrap"/>
+                        <WrapPanel Margin="0,10,0,0">
+                            <Button Content="Copy License Key" Margin="0,0,8,6" Click="OnDCopy"/>
+                            <Button Content="Copy customer message" Margin="0,0,8,6" Click="OnDMessage"/>
+                            <Button Content="Export License…" Margin="0,0,8,6" Click="OnDExport"/>
+                            <Button Content="Record activation…" Margin="0,0,8,6" Click="OnDActivated"/>
+                            <Button x:Name="DRevoke" Content="Revoke" Style="{StaticResource DangerButton}" Margin="0,0,8,6" Click="OnDRevoke"/>
+                        </WrapPanel>
+                    </StackPanel>
+                </Border>
+                <DataGrid x:Name="LicenseGrid" AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single" HeadersVisibility="Column"
+                          GridLinesVisibility="Horizontal" Background="{DynamicResource SurfaceBg}" BorderBrush="{DynamicResource BorderBrushSoft}"
+                          RowHeight="30" SelectionChanged="OnSelect" CanUserAddRows="False">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="License ID" Binding="{Binding LicenseId}" Width="200"/>
+                        <DataGridTextColumn Header="Customer" Binding="{Binding CustomerName}" Width="*"/>
+                        <DataGridTextColumn Header="Email" Binding="{Binding CustomerEmail}" Width="*"/>
+                        <DataGridTextColumn Header="Created" Binding="{Binding CreatedText}" Width="130"/>
+                        <DataGridTextColumn Header="Device" Binding="{Binding DeviceText}" Width="150"/>
+                        <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="80"/>
+                        <DataGridTextColumn Header="Activation" Binding="{Binding ActivationStatus}" Width="*"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </DockPanel>
+
+            <!-- Revocations -->
+            <ScrollViewer x:Name="PageRevocations" Grid.Column="1" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="32,28,32,28" MaxWidth="900" HorizontalAlignment="Left">
+                    <TextBlock Text="Revocations" Style="{StaticResource H1}"/>
+                    <TextBlock Style="{StaticResource Muted}" Margin="0,0,0,18" TextWrapping="Wrap"
+                               Text="Revoke a license in License History (refund, abuse or key sharing). Customers' apps learn about revocations from a signed list — this generator works offline, so it cannot reach customers' computers by itself."/>
+                    <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                        <StackPanel>
+                            <TextBlock x:Name="RevCount" Style="{StaticResource H2}"/>
+                            <TextBox x:Name="RevList" IsReadOnly="True" Height="140" TextWrapping="Wrap" FontFamily="Consolas" VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Top"/>
+                            <WrapPanel Margin="0,12,0,0">
+                                <Button Content="Export signed revocation list…" Style="{StaticResource PrimaryButton}" Margin="0,0,8,6" Click="OnExportRevocations"/>
+                                <Button Content="Copy IDs for the app's built-in list" Margin="0,0,8,6" Click="OnCopyRevokedIds"/>
+                            </WrapPanel>
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="How revocation reaches customers" Style="{StaticResource H2}"/>
+                            <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap"
+                                       Text="1. Publish the exported revocations.bnxrev at a fixed HTTPS address (for example a file in a GitHub repository) and set LicensingConfig.RevocationListUrl in the app. Apps check it in the background when online; the list is signed, so it cannot be faked.&#x0a;2. Also paste the IDs into src/BurhanScreenCapture/Licensing/RevokedLicenses.txt so every new app version blocks them even offline.&#x0a;An app that never goes online and is never updated cannot learn about a revocation — that is a limit of offline licensing."/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Keys -->
+            <ScrollViewer x:Name="PageKeys" Grid.Column="1" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="32,28,32,28" MaxWidth="900" HorizontalAlignment="Left">
+                    <TextBlock Text="Signing Key &amp; Backup" Style="{StaticResource H1}"/>
+                    <TextBlock Style="{StaticResource Muted}" Margin="0,0,0,18" TextWrapping="Wrap" Text="The private signing key is stored encrypted with your password. Only the PUBLIC key below goes into Burhan Screen Capture Pro."/>
+                    <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                        <StackPanel>
+                            <TextBlock Text="Public verification key" Style="{StaticResource H2}"/>
+                            <TextBox x:Name="PubKey" IsReadOnly="True" TextWrapping="Wrap" FontFamily="Consolas" Height="70" VerticalContentAlignment="Top"/>
+                            <TextBlock Style="{StaticResource Muted}" FontSize="12" Margin="0,6,0,0" TextWrapping="Wrap"
+                                       Text="Paste this into src/BurhanScreenCapture/Licensing/ProductionPublicKey.txt in the GitHub repository and rebuild. Release builds of the app accept keys from this generator only after that."/>
+                            <WrapPanel Margin="0,10,0,0">
+                                <Button Content="Copy public key" Style="{StaticResource PrimaryButton}" Margin="0,0,8,6" Click="OnCopyPub"/>
+                                <Button Content="Save public key to file…" Margin="0,0,8,6" Click="OnSavePub"/>
+                            </WrapPanel>
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                        <StackPanel>
+                            <TextBlock Text="Backup" Style="{StaticResource H2}"/>
+                            <TextBlock x:Name="DataPath" Style="{StaticResource Muted}" TextWrapping="Wrap"/>
+                            <TextBlock Style="{StaticResource Muted}" FontSize="12" Margin="0,4,0,0" TextWrapping="Wrap"
+                                       Text="Every change is also saved automatically in the backups folder (last 50 versions). Keep a copy on a USB drive: if the signing key is lost, you cannot issue keys that existing app versions accept."/>
+                            <WrapPanel Margin="0,10,0,0">
+                                <Button Content="Back up database + encrypted key…" Style="{StaticResource PrimaryButton}" Margin="0,0,8,6" Click="OnBackup"/>
+                                <Button Content="Restore database…" Margin="0,0,8,6" Click="OnRestore"/>
+                                <Button Content="Open data folder" Margin="0,0,8,6" Click="OnOpenData"/>
+                                <Button Content="Change password…" Margin="0,0,8,6" Click="OnChangePassword"/>
+                                <Button Content="Lock" Margin="0,0,8,6" Click="OnLock"/>
+                            </WrapPanel>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+
+        <!-- ============ Setup / Unlock ============ -->
+        <Grid x:Name="Gate">
+            <Border Style="{StaticResource Card}" Width="480" VerticalAlignment="Center" HorizontalAlignment="Center" Padding="30">
+                <StackPanel>
+                    <Image Source="/BurhanNexusLicenseKeyGenerator;component/Assets/logo.png" Width="56" Height="56" HorizontalAlignment="Left"/>
+                    <TextBlock Text="Burhan Nexus License Key Generator" Style="{StaticResource H2}" FontSize="19" Margin="0,12,0,4"/>
+                    <TextBlock x:Name="GateText" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,14"/>
+                    <TextBlock Text="Password" Style="{StaticResource Label}" Margin="0,0,0,4"/>
+                    <PasswordBox x:Name="Pw1" Padding="6" Margin="0,0,0,8" KeyDown="OnPwKey"/>
+                    <StackPanel x:Name="ConfirmRow">
+                        <TextBlock Text="Confirm password" Style="{StaticResource Label}" Margin="0,0,0,4"/>
+                        <PasswordBox x:Name="Pw2" Padding="6" Margin="0,0,0,8"/>
+                    </StackPanel>
+                    <TextBlock x:Name="GateError" Foreground="{DynamicResource Danger}" TextWrapping="Wrap" Margin="0,4,0,8"/>
+                    <StackPanel Orientation="Horizontal">
+                        <Button x:Name="GateBtn" Style="{StaticResource PrimaryButton}" Padding="18,8" Click="OnGate"/>
+                        <Button x:Name="ImportBtn" Content="Import existing private key…" Margin="8,0,0,0" Click="OnImportKey"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>

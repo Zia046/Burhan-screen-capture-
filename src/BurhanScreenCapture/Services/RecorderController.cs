@@ -70,10 +70,25 @@ public static class RecorderController
             // ---- validation with clear messages
             if (req.Kind == RecordingSourceKind.AudioOnly && !s.RecordSystemAudio && !s.RecordMicrophone)
                 return Fail("Turn on System Audio or Microphone to record audio.");
-            if (s.RecordMicrophone && AudioDevices.Microphones().Count == 0)
-                return Fail("No microphone was found. Plug in a microphone or turn off \"Microphone\".");
-            if (s.RecordSystemAudio && !AudioDevices.HasPlaybackDevice())
-                return Fail("No speakers or headphones were found, so system audio cannot be recorded. Turn off \"System Audio\" or connect an audio device.");
+            // Resolve audio endpoints up front. ScreenRecorderLib marshals DeviceName with marshal_as, which throws
+            // "NULLPTR is not supported for this conversion" for null — so every source gets an explicit endpoint ID,
+            // or "" which the native layer treats as "use and follow the Windows default device".
+            _systemDevice = null;
+            _micDevice = null;
+            if (s.RecordSystemAudio)
+            {
+                var speakers = AudioDevices.Speakers();
+                if (speakers.Count == 0)
+                    return Fail("System audio capture could not be initialized. Please check your Windows audio output device (no speakers or headphones are enabled).");
+                _systemDevice = ResolveDevice(s.SystemAudioDeviceId, speakers, "audio output device");
+            }
+            if (s.RecordMicrophone)
+            {
+                var mics = AudioDevices.Microphones();
+                if (mics.Count == 0)
+                    return Fail("Microphone not detected. Please connect or select a microphone.");
+                _micDevice = ResolveDevice(s.MicrophoneDeviceId, mics, "microphone");
+            }
 
             var folder = s.RecordingFolder;
             if (AppPaths.ValidateWritableFolder(folder) is { } err)
@@ -103,6 +118,7 @@ public static class RecorderController
             _rec.OnRecordingFailed += OnFailed;
             _rec.OnStatusChanged += OnStatus;
             _discard = false;
+            _stopRequested = false;
             LastRequest = req;
 
             Clock.Reset();
@@ -121,7 +137,7 @@ public static class RecorderController
         {
             Log.Error("Recording start failed", ex);
             Cleanup();
-            return Fail(FriendlyError(ex.Message));
+            return Fail(FriendlyError(ex.Message, starting: true));
         }
         finally
         {
@@ -130,17 +146,27 @@ public static class RecorderController
         }
     }
 
+    private static string? _systemDevice, _micDevice;
+
+    /// <summary>Returns the saved endpoint ID if it is still connected, otherwise "" (Windows default) and tells the user.</summary>
+    private static string ResolveDevice(string? savedId, List<AudioDeviceItem> available, string what)
+    {
+        if (string.IsNullOrEmpty(savedId)) return "";
+        if (available.Any(d => d.Id == savedId)) return savedId;
+        var def = available.FirstOrDefault(d => d.IsDefault) ?? available[0];
+        Log.Warn($"Saved {what} {savedId} is not connected; using the Windows default ({def.Name}).");
+        App.Tray?.Notify($"Selected {what} not found", $"Using \"{def.Name}\" instead.", error: true);
+        return "";
+    }
+
     private static RecorderOptions BuildOptions(RecordingRequest req, AppSettings s)
     {
         bool pro = Entitlements.IsAllowed(Feature.AdvancedVideoExport);
         var audioSources = new List<AudioSourceBase>();
-        if (s.RecordSystemAudio) audioSources.Add(new LoopbackAudioSource { Volume = Math.Clamp(s.SystemAudioVolume, 0f, 2f) });
+        if (s.RecordSystemAudio)
+            audioSources.Add(new LoopbackAudioSource(_systemDevice ?? "") { Volume = Math.Clamp(s.SystemAudioVolume, 0f, 2f) });
         if (s.RecordMicrophone)
-        {
-            var mic = string.IsNullOrEmpty(s.MicrophoneDeviceId) ? new CaptureAudioSource() : new CaptureAudioSource(s.MicrophoneDeviceId);
-            mic.Volume = Math.Clamp(s.MicrophoneVolume, 0f, 2f);
-            audioSources.Add(mic);
-        }
+            audioSources.Add(new CaptureAudioSource(_micDevice ?? "") { Volume = Math.Clamp(s.MicrophoneVolume, 0f, 2f) });
 
         RecordingSourceBase source;
         PixelRect area;
@@ -242,7 +268,12 @@ public static class RecorderController
                 MouseLeftClickDetectionColor = "#FFD43B",
                 MouseRightClickDetectionColor = "#3D8BFF"
             },
-            LogOptions = new LogOptions { IsLogEnabled = false }
+            LogOptions = new LogOptions
+            {
+                IsLogEnabled = true,
+                LogFilePath = Path.Combine(AppPaths.Logs, "recorder-native.log"),
+                LogSeverityLevel = LogLevel.Warn
+            }
         };
     }
 
@@ -262,13 +293,28 @@ public static class RecorderController
         StateChanged?.Invoke();
     }
 
+    private static bool _stopRequested;
+
+    /// <summary>Requests finalisation. Safe to call repeatedly: only the first call reaches the encoder;
+    /// the file is closed (audio and video flushed, MP4 finalised) before OnRecordingComplete fires.</summary>
     public static void Stop()
     {
-        if (_rec is null) return;
+        var rec = _rec;
+        if (rec is null || _stopRequested) return;
+        var st = rec.Status;
+        if (st is RecorderStatus.Idle or RecorderStatus.Finishing) return;
+        _stopRequested = true;
         Clock.Stop();
-        try { _rec.Stop(); }
-        catch (Exception ex) { Log.Error("Stop failed", ex); }
+        StateChanged?.Invoke();
+        try { rec.Stop(); }
+        catch (Exception ex)
+        {
+            Log.Error("Stop failed", ex);
+            _stopRequested = false;
+        }
     }
+
+    public static bool IsStopping => _stopRequested;
 
     /// <summary>Stops and deletes the file.</summary>
     public static void Discard()
@@ -339,6 +385,7 @@ public static class RecorderController
     private static void Cleanup()
     {
         Clock.Stop();
+        _stopRequested = false;
         if (_rec is not null)
         {
             _rec.OnRecordingComplete -= OnComplete;
@@ -366,7 +413,7 @@ public static class RecorderController
         return false;
     }
 
-    public static string FriendlyError(string? raw)
+    public static string FriendlyError(string? raw, bool starting = false)
     {
         var e = (raw ?? "").ToLowerInvariant();
         if (e.Contains("0x80070005") || e.Contains("access") && e.Contains("denied"))
@@ -379,6 +426,9 @@ public static class RecorderController
             return "Windows Media Foundation is missing or failed. On Windows N/KN editions install the \"Media Feature Pack\" from Settings › Apps › Optional features.";
         if (e.Contains("display") || e.Contains("output") || e.Contains("dxgi") || e.Contains("0x887a"))
             return "The display configuration changed (monitor unplugged, resolution or graphics driver change). Start the recording again.";
-        return string.IsNullOrWhiteSpace(raw) ? "The recording stopped unexpectedly." : "The recording stopped: " + raw;
+        if (e.Contains("wasapi") || e.Contains("loopback") || e.Contains("audclnt") || e.Contains("0x8889"))
+            return "Audio capture could not be initialized. Please check your Windows audio output device and microphone (Settings › System › Sound).";
+        var prefix = starting ? "The recording could not be started: " : "The recording stopped: ";
+        return string.IsNullOrWhiteSpace(raw) ? "The recording stopped unexpectedly." : prefix + raw + "\n\nDetails were saved to the log folder.";
     }
 }

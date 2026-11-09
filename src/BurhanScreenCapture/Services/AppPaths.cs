@@ -9,8 +9,7 @@ public static class AppPaths
     public static string Temp => Ensure(Path.Combine(LocalData, "temp"));
     public static string SettingsFile => Path.Combine(AppData, "settings.json");
     public static string HistoryFile => Path.Combine(AppData, "history.json");
-    public static string LicenseFile => Path.Combine(LocalData, "license.dat");
-    public static string TrialFile => Path.Combine(LocalData, "state.dat");
+    public static string LicenseFile => Path.Combine(LocalData, "activation.dat");
 
     public static string DefaultScreenshotFolder =>
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "Burhan Screen Capture");

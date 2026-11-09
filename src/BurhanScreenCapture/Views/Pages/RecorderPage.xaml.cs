@@ -41,14 +41,7 @@ public partial class RecorderPage : UserControl, IPage
         Mic.IsChecked = s.RecordMicrophone;
         SysVol.Value = s.SystemAudioVolume;
         MicVol.Value = s.MicrophoneVolume;
-        var mics = AudioDevices.Microphones();
-        MicBox.ItemsSource = mics;
-        MicBox.SelectedItem = mics.FirstOrDefault(m => m.Id == s.MicrophoneDeviceId) ?? mics.FirstOrDefault();
-        if (mics.Count == 0)
-        {
-            MicBox.ItemsSource = new[] { new AudioDeviceItem("", "No microphone found", false) };
-            MicBox.SelectedIndex = 0;
-        }
+        LoadDevices();
 
         SelectByTag(FpsBox, s.RecordingFps.ToString(), 2);
         QualityBox.SelectedIndex = (int)s.RecordingQuality;
@@ -66,6 +59,31 @@ public partial class RecorderPage : UserControl, IPage
         if (IsVisible) StartMeters();
     }
 
+    /// <summary>First entry follows the Windows default device; the rest are the connected endpoints.</summary>
+    private void LoadDevices()
+    {
+        var s = SettingsService.Current;
+        static List<AudioDeviceItem> WithDefault(List<AudioDeviceItem> devices, string label, string none)
+        {
+            if (devices.Count == 0) return new() { new AudioDeviceItem("", none, false) };
+            var def = devices.FirstOrDefault(d => d.IsDefault) ?? devices[0];
+            return new[] { new AudioDeviceItem("", $"{label} ({def.Name})", false) }.Concat(devices).ToList();
+        }
+        var spk = WithDefault(AudioDevices.Speakers(), "Windows default", "No speakers or headphones found");
+        SpeakerBox.ItemsSource = spk;
+        SpeakerBox.SelectedItem = spk.FirstOrDefault(d => d.Id == (s.SystemAudioDeviceId ?? "")) ?? spk[0];
+        var mics = WithDefault(AudioDevices.Microphones(), "Windows default", "No microphone found");
+        MicBox.ItemsSource = mics;
+        MicBox.SelectedItem = mics.FirstOrDefault(d => d.Id == (s.MicrophoneDeviceId ?? "")) ?? mics[0];
+    }
+
+    private void OnSpeakerChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_loading || SpeakerBox.SelectedItem is not AudioDeviceItem d) return;
+        SettingsService.Current.SystemAudioDeviceId = d.Id == "" ? null : d.Id;
+        SettingsService.Save();
+    }
+
     private static void SelectByTag(ComboBox box, string tag, int fallback)
     {
         box.SelectedIndex = fallback;
@@ -75,7 +93,8 @@ public partial class RecorderPage : UserControl, IPage
 
     private void UpdateState()
     {
-        StartText.Text = RecorderController.IsBusy ? "Stop Recording" : "Start Recording";
+        StartText.Text = RecorderController.IsStopping ? "Saving…" : RecorderController.IsBusy ? "Stop Recording" : "Start Recording";
+        StartBtn.IsEnabled = !RecorderController.IsStopping;
         LastText.Text = RecorderController.LastFile is { } f ? $"Last recording: {f}" : "";
     }
 
@@ -164,7 +183,7 @@ public partial class RecorderPage : UserControl, IPage
     private void OnMeter(object? sender, EventArgs e)
     {
         if (_audio is null) return;
-        _sys = SysAudio.IsChecked == true ? Math.Max(_audio.SystemPeak(), _sys * 0.8f) : 0;
+        _sys = SysAudio.IsChecked == true ? Math.Max(_audio.SystemPeak((SpeakerBox.SelectedItem as AudioDeviceItem)?.Id), _sys * 0.8f) : 0;
         _mic = Mic.IsChecked == true ? Math.Max(_audio.MicPeak((MicBox.SelectedItem as AudioDeviceItem)?.Id), _mic * 0.8f) : 0;
         SysMeter.Value = _sys;
         MicMeter.Value = _mic;
@@ -182,8 +201,8 @@ public partial class RecorderPage : UserControl, IPage
 
     private void OnMicChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (_loading || MicBox.SelectedItem is not AudioDeviceItem d || d.Id == "") return;
-        SettingsService.Current.MicrophoneDeviceId = d.Id;
+        if (_loading || MicBox.SelectedItem is not AudioDeviceItem d) return;
+        SettingsService.Current.MicrophoneDeviceId = d.Id == "" ? null : d.Id;
         SettingsService.Save();
         StopMeters();
         if (IsVisible) StartMeters();

@@ -13,6 +13,7 @@ permissions:
 jobs:
   build:
     runs-on: windows-latest
+    timeout-minutes: 45
     env:
       DOTNET_NOLOGO: true
       DOTNET_CLI_TELEMETRY_OPTOUT: true
@@ -27,44 +28,83 @@ jobs:
         id: ver
         shell: pwsh
         run: |
-          $v = "1.0.0"
+          $v = "1.1.0"
           if ("${{ github.ref }}" -like "refs/tags/v*") { $v = "${{ github.ref_name }}".TrimStart('v') }
           "version=$v" >> $env:GITHUB_OUTPUT
+
+      # ---------- virtual audio hardware so system audio and microphone recording can really be tested
+      - name: Virtual audio device (Scream)
+        uses: LABSN/sound-ci-helpers@v1
+        continue-on-error: true
+
+      - name: Virtual microphone (VB-CABLE)
+        shell: pwsh
+        continue-on-error: true
+        timeout-minutes: 4
+        run: |
+          Invoke-WebRequest https://download.vb-audio.com/Download_CABLE/VBCABLE_Driver_Pack43.zip -OutFile vb.zip
+          Expand-Archive vb.zip -DestinationPath vb -Force
+          $p = Start-Process -FilePath vb/VBCABLE_Setup_x64.exe -ArgumentList "-i","-h" -PassThru
+          if (-not $p.WaitForExit(150000)) { $p.Kill(); Write-Host "VB-CABLE installer timed out" }
+          Get-CimInstance Win32_SoundDevice | Format-Table Name, Status
 
       - name: Unit tests (licensing & entitlements)
         run: dotnet test tests/BurhanScreenCapture.Tests -c Release --logger "console;verbosity=normal"
 
-      - name: Build (Debug — uses development license keys)
-        run: dotnet build src/BurhanScreenCapture/BurhanScreenCapture.csproj -c Debug
+      # ---------- publish the real executables
+      - name: Publish Burhan Screen Capture Pro (shipping build)
+        run: >
+          dotnet publish src/BurhanScreenCapture/BurhanScreenCapture.csproj -c Release -r win-x64
+          --self-contained true -p:PublishReadyToRun=true -p:Version=${{ steps.ver.outputs.version }} -o publish/app
 
-      - name: Build license generator
-        run: dotnet build tools/LicenseGenerator -c Release
+      - name: Publish Burhan Screen Capture Pro (test copy that also trusts the CI test key)
+        run: >
+          dotnet publish src/BurhanScreenCapture/BurhanScreenCapture.csproj -c Release -r win-x64
+          --self-contained true -p:Version=${{ steps.ver.outputs.version }}
+          -p:TestPublicKeyFile=${{ github.workspace }}\tools\LicenseGenerator\dev-keys\dev-test-public.txt -o publish/app-test
 
-      - name: Licensing end-to-end with generator (dev keys)
+      - name: Publish Burhan Nexus License Key Generator
+        run: >
+          dotnet publish tools/LicenseKeyGenerator/LicenseKeyGenerator.csproj -c Release -r win-x64
+          --self-contained true -p:Version=${{ steps.ver.outputs.version }} -o publish/generator
+
+      # ---------- end-to-end tests on the published executables
+      - name: Generator self-test (published exe) and cross-app license files
         shell: pwsh
         run: |
-          $gen = "tools/LicenseGenerator/bin/Release/net8.0/LicenseGenerator.dll"
-          $key = (dotnet $gen newkey).Trim()
-          dotnet $gen issue --private tools/LicenseGenerator/dev-keys/dev-test-private.txt --key $key --plan Yearly --device ABCD-1234-ABCD-1234 --to "CI Test" --out ci.bslic
-          dotnet $gen verify --public tools/LicenseGenerator/dev-keys/dev-test-public.txt --file ci.bslic
-          if ($LASTEXITCODE -ne 0) { throw "license verify failed" }
-
-      - name: End-to-end self-test on Windows desktop (capture, recording, editor, GIF, OCR, licensing, UI)
-        shell: pwsh
-        run: |
-          $exe = (Get-ChildItem src/BurhanScreenCapture/bin -Recurse -Filter BurhanScreenCapture.exe | Where-Object FullName -like '*Debug*' | Select-Object -First 1).FullName
-          Start-Process -FilePath $exe -ArgumentList "--print-device-id" -Wait
+          Start-Process -FilePath publish/app-test/BurhanScreenCapture.exe -ArgumentList "--print-device-id" -Wait
           $dev = (Get-Content "$env:LOCALAPPDATA\Burhan Nexus\Screen Capture Pro\device-id.txt").Trim()
           Write-Host "Device ID: $dev"
-          $gen = "tools/LicenseGenerator/bin/Release/net8.0/LicenseGenerator.dll"
-          $prv = "tools/LicenseGenerator/dev-keys/dev-test-private.txt"
-          dotnet $gen issue --private $prv --key (dotnet $gen newkey).Trim() --plan Yearly --device $dev --to "Self Test" --out "$PWD/pro.bslic"
-          dotnet $gen issue --private $prv --key (dotnet $gen newkey).Trim() --plan Monthly --device $dev --days -1 --out "$PWD/expired.bslic"
-          $out = "$PWD/selftest"
-          $p = Start-Process -FilePath $exe -ArgumentList "--selftest","`"$out`"","--license","`"$PWD/pro.bslic`"","--expired","`"$PWD/expired.bslic`"" -PassThru -Wait
-          Get-Content "$out/results.txt"
-          Get-ChildItem "$env:LOCALAPPDATA\Burhan Nexus\Screen Capture Pro\logs" | Get-Content | Select-String "ERROR|WARN" | Select-Object -First 40
-          if ($p.ExitCode -ne 0) { throw "Self-test failed with exit code $($p.ExitCode)" }
+          $p = Start-Process -FilePath publish/generator/BurhanNexusLicenseKeyGenerator.exe -ArgumentList "--selftest","`"$PWD\gen`"","--import-private","`"$PWD\tools\LicenseGenerator\dev-keys\dev-test-private.txt`"","--device",$dev -PassThru -Wait
+          Get-Content gen/results.txt
+          if ($p.ExitCode -ne 0) { throw "Generator self-test failed ($($p.ExitCode))" }
+
+      - name: App self-test phase 1 (published exe) — capture, editor, audio matrix, licensing, UI
+        shell: pwsh
+        run: |
+          $p = Start-Process -FilePath publish/app-test/BurhanScreenCapture.exe -ArgumentList "--selftest","`"$PWD\selftest`"","--key-file","`"$PWD\gen\customer.bnxlic`"","--wrong-device-key-file","`"$PWD\gen\other-device.bnxlic`"" -PassThru -Wait
+          Get-Content selftest/results.txt
+          Get-ChildItem "$env:LOCALAPPDATA\Burhan Nexus\Screen Capture Pro\logs" -Filter "log-*" | Get-Content | Select-String "ERROR|WARN" | Select-Object -First 40
+          if (Test-Path "$env:LOCALAPPDATA\Burhan Nexus\Screen Capture Pro\logs\recorder-native.log") { Get-Content "$env:LOCALAPPDATA\Burhan Nexus\Screen Capture Pro\logs\recorder-native.log" -Tail 30 }
+          if ($p.ExitCode -ne 0) { throw "Self-test phase 1 failed ($($p.ExitCode))" }
+
+      - name: App self-test phase 2 (new process) — persistence after restart, offline, revocation
+        shell: pwsh
+        run: |
+          $p = Start-Process -FilePath publish/app-test/BurhanScreenCapture.exe -ArgumentList "--selftest","`"$PWD\selftest2`"","--phase2","--key-file","`"$PWD\gen\customer.bnxlic`"","--revocations","`"$PWD\gen\revoke-customer.bnxrev`"" -PassThru -Wait
+          Get-Content selftest2/results.txt
+          if ($p.ExitCode -ne 0) { throw "Self-test phase 2 failed ($($p.ExitCode))" }
+
+      - name: Smoke test shipping executables
+        shell: pwsh
+        run: |
+          foreach ($exe in "publish/app/BurhanScreenCapture.exe","publish/generator/BurhanNexusLicenseKeyGenerator.exe") {
+            $p = Start-Process -FilePath $exe -ArgumentList "--minimized" -PassThru
+            Start-Sleep -Seconds 10
+            if ($p.HasExited) { throw "$exe exited during startup with code $($p.ExitCode)" }
+            Stop-Process -Id $p.Id -Force
+            Write-Host "OK: $exe"
+          }
 
       - name: Print UI snapshots (base64, for review)
         if: always()
@@ -73,8 +113,8 @@ jobs:
           Add-Type -AssemblyName System.Drawing
           $codec = [Drawing.Imaging.ImageCodecInfo]::GetImageEncoders() | Where-Object MimeType -eq 'image/jpeg'
           $ep = New-Object Drawing.Imaging.EncoderParameters 1
-          $ep.Param[0] = New-Object Drawing.Imaging.EncoderParameter ([Drawing.Imaging.Encoder]::Quality), 82L
-          foreach ($n in "ui-light-home","ui-dark-recorder","ui-light-capture","ui-dark-upgrade","ui-light-settings","ui-editor","ui-upgrade-dialog","ui-preview","editor-output","ui-pro-history","ui-dark-tools") {
+          $ep.Param[0] = New-Object Drawing.Imaging.EncoderParameter ([Drawing.Imaging.Encoder]::Quality), 80L
+          foreach ($n in "ui-light-upgrade","ui-pro-upgrade","ui-dark-recorder","ui-upgrade-dialog","ui-pro-about","ui-light-about") {
             $f = "selftest/$n.png"
             if (!(Test-Path $f)) { continue }
             $img = [Drawing.Image]::FromFile((Resolve-Path $f))
@@ -96,51 +136,43 @@ jobs:
           path: |
             selftest/*.png
             selftest/*.txt
-            selftest/*.json
-            selftest/*.gif
+            selftest2/*.txt
+            gen/results.txt
             selftest/recordings/*
 
-      - name: Publish (Release, self-contained win-x64)
-        run: >
-          dotnet publish src/BurhanScreenCapture/BurhanScreenCapture.csproj -c Release -r win-x64
-          --self-contained true -p:PublishReadyToRun=true -p:Version=${{ steps.ver.outputs.version }}
-          -o publish/app
-
-      - name: Smoke test (app starts and stays up)
-        shell: pwsh
-        run: |
-          $p = Start-Process -FilePath "publish/app/BurhanScreenCapture.exe" -ArgumentList "--minimized" -PassThru
-          Start-Sleep -Seconds 12
-          if ($p.HasExited) { 
-            Get-ChildItem "$env:LOCALAPPDATA\Burhan Nexus\Screen Capture Pro\logs" -ErrorAction SilentlyContinue | Get-Content
-            throw "App exited during startup with code $($p.ExitCode)" }
-          Get-ChildItem "$env:LOCALAPPDATA\Burhan Nexus\Screen Capture Pro\logs" -ErrorAction SilentlyContinue | Get-Content
-          Stop-Process -Id $p.Id -Force
-
+      # ---------- installers
       - name: Download Visual C++ runtime for installer
         shell: pwsh
         run: Invoke-WebRequest https://aka.ms/vs/17/release/vc_redist.x64.exe -OutFile installer/redist/vc_redist.x64.exe
 
-      - name: Build installer (Inno Setup)
+      - name: Build installers (Inno Setup)
         shell: pwsh
         run: |
           $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
           if (!(Test-Path $iscc)) { choco install innosetup -y --no-progress | Out-Null }
           & $iscc /DAppVersion=${{ steps.ver.outputs.version }} /DPublishDir=..\publish\app installer\BurhanScreenCapture.iss
-          if ($LASTEXITCODE -ne 0) { throw "ISCC failed" }
+          if ($LASTEXITCODE -ne 0) { throw "ISCC failed (app)" }
+          & $iscc /DAppVersion=${{ steps.ver.outputs.version }} /DPublishDir=..\publish\generator installer\LicenseKeyGenerator.iss
+          if ($LASTEXITCODE -ne 0) { throw "ISCC failed (generator)" }
 
-      - name: Portable zip
+      - name: Portable zip (app)
         shell: pwsh
         run: Compress-Archive -Path publish/app/* -DestinationPath artifacts/BurhanScreenCapturePro-Portable-${{ steps.ver.outputs.version }}.zip
 
       - uses: actions/upload-artifact@v4
         with:
           name: BurhanScreenCapturePro-${{ steps.ver.outputs.version }}
-          path: artifacts/*
+          path: |
+            artifacts/BurhanScreenCapturePro-*
 
-      - name: GitHub Release (tags only)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ADMIN-ONLY-BurhanNexusLicenseKeyGenerator-${{ steps.ver.outputs.version }}
+          path: artifacts/BurhanNexusLicenseKeyGenerator-*
+
+      - name: GitHub Release (tags only — customer app only)
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: artifacts/*
+          files: artifacts/BurhanScreenCapturePro-*
           body_path: CHANGELOG.md

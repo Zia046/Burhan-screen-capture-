@@ -11,6 +11,7 @@
                             <TextBlock Text="Burhan Screen Capture Pro" Style="{StaticResource H1}"/>
                             <TextBlock Text="Capture. Create. Communicate." Foreground="{DynamicResource Accent}" FontSize="14"/>
                             <TextBlock x:Name="VersionText" Style="{StaticResource Muted}" Margin="0,4,0,0"/>
+                            <TextBlock Text="Developed by Burhan Nexus" Style="{StaticResource Label}" FontWeight="SemiBold" Margin="0,4,0,0"/>
                         </StackPanel>
                     </StackPanel>
                     <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextPrimary}" FontSize="14" Margin="0,20,0,0" LineHeight="22"
@@ -20,7 +21,7 @@
             <Border Style="{StaticResource Card}" Margin="0,0,0,16">
                 <Grid>
                     <Grid.ColumnDefinitions><ColumnDefinition Width="160"/><ColumnDefinition/></Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/></Grid.RowDefinitions>
+                    <Grid.RowDefinitions><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/></Grid.RowDefinitions>
                     <TextBlock Text="Developer" Style="{StaticResource Muted}" Margin="0,4"/>
                     <TextBlock Grid.Column="1" Text="Burhan Nexus" Style="{StaticResource Label}" Margin="0,4"/>
                     <TextBlock Grid.Row="1" Text="Website" Style="{StaticResource Muted}" Margin="0,4"/>
@@ -28,9 +29,11 @@
                     <TextBlock Grid.Row="2" Text="Support" Style="{StaticResource Muted}" Margin="0,4"/>
                     <TextBlock Grid.Row="2" Grid.Column="1" Margin="0,4"><Hyperlink Click="OnMail"><Run x:Name="MailText"/></Hyperlink></TextBlock>
                     <TextBlock Grid.Row="3" Text="Edition" Style="{StaticResource Muted}" Margin="0,4"/>
-                    <TextBlock x:Name="EditionText" Grid.Row="3" Grid.Column="1" Style="{StaticResource Label}" Margin="0,4"/>
-                    <TextBlock Grid.Row="4" Text="Copyright" Style="{StaticResource Muted}" Margin="0,4"/>
-                    <TextBlock Grid.Row="4" Grid.Column="1" Text="© 2026 Burhan Nexus. All rights reserved." Style="{StaticResource Label}" Margin="0,4"/>
+                    <TextBlock x:Name="EditionText" Grid.Row="3" Grid.Column="1" Style="{StaticResource Label}" FontWeight="SemiBold" Margin="0,4"/>
+                    <TextBlock Grid.Row="4" Text="License" Style="{StaticResource Muted}" Margin="0,4"/>
+                    <TextBlock x:Name="LicenseText" Grid.Row="4" Grid.Column="1" Style="{StaticResource Label}" Margin="0,4"/>
+                    <TextBlock Grid.Row="5" Text="Copyright" Style="{StaticResource Muted}" Margin="0,4"/>
+                    <TextBlock Grid.Row="5" Grid.Column="1" Text="© 2026 Burhan Nexus. All rights reserved." Style="{StaticResource Label}" Margin="0,4"/>
                 </Grid>
             </Border>
             <Border Style="{StaticResource Card}">

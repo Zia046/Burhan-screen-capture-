@@ -18,7 +18,8 @@ public partial class AboutPage : UserControl, IPage
     {
         VersionText.Text = $"Version {App.Version} • Windows 10 / 11 (64-bit)";
         var st = LicenseService.Status;
-        EditionText.Text = st.Edition == Edition.Free ? "Free Edition" : LicensePlanInfo.DisplayName(st.Plan);
+        EditionText.Text = EditionInfo.Name(st.Edition);
+        LicenseText.Text = EditionInfo.LicenseText(st.Edition);
     }
 
     private void OnWeb(object sender, RoutedEventArgs e) => Dialogs.OpenUrl(LicensingConfig.Website);

@@ -6,139 +6,153 @@ public class LicensingTests
     private static readonly (string Pub, string Prv) Keys = LicenseCrypto.CreateKeyPair();
     private const string Device = "ABCD-1234-EF56-7890";
 
-    private static SignedLicense Issue(LicensePlan plan, DateTime? expires, string device = Device, string? key = null) =>
-        LicenseCrypto.Sign(new LicenseData
-        {
-            LicenseId = "test",
-            LicenseKey = key ?? LicenseKey.Generate(),
-            Plan = plan,
-            DeviceId = device,
-            IssuedUtc = DateTime.UtcNow,
-            ExpiresUtc = expires
-        }, Keys.Prv);
+    private static LicenseData NewData(string? device = null) => new()
+    {
+        LicenseIdBytes = LicenseData.NewLicenseIdBytes(),
+        IssuedUtc = DateTime.UtcNow,
+        BoundDeviceId = device
+    };
+
+    private static string Issue(string? device = null) => LicenseKey.Create(NewData(device), Keys.Prv);
+    private static LicenseStatus Eval(string? key, string device = Device, ICollection<string>? revoked = null) =>
+        LicenseEvaluator.Evaluate(key, new[] { Keys.Pub }, device, revoked);
 
     [Fact]
-    public void NoLicense_IsFree()
+    public void NoKey_IsFree()
     {
-        var st = LicenseEvaluator.Evaluate(null, new[] { Keys.Pub }, Device, DateTime.UtcNow, null);
+        var st = Eval(null);
         Assert.Equal(Edition.Free, st.Edition);
         Assert.False(st.IsPro);
+    }
+
+    [Fact]
+    public void UnboundKey_ActivatesLifetimePro_OnAnyDevice()
+    {
+        var key = Issue();
+        Assert.StartsWith("BNX-SC-PRO-", key);
+        Assert.Equal(LicenseState.Active, Eval(key).State);
+        Assert.Equal(Edition.LifetimePro, Eval(key, "1111-2222-3333-4444").Edition);
+    }
+
+    [Fact]
+    public void BoundKey_OnlyActivatesOnItsDevice()
+    {
+        var key = Issue(Device);
+        var ok = Eval(key);
+        Assert.Equal(LicenseState.Active, ok.State);
+        Assert.Equal(Device, ok.Data!.BoundDeviceId);
+        Assert.Equal(LicenseState.WrongDevice, Eval(key, "FFFF-0000-FFFF-0000").State);
+    }
+
+    [Fact]
+    public void PastedKey_WithSpacesLowercaseAndLineBreaks_IsAccepted()
+    {
+        var key = Issue(Device);
+        var messy = "  " + key.ToLowerInvariant().Replace("-", " - ").Insert(40, "\r\n") + "\n";
+        Assert.Equal(LicenseState.Active, Eval(messy).State);
+    }
+
+    [Fact]
+    public void TamperedKey_IsRejected()
+    {
+        var key = Issue(Device);
+        int pos = 30;
+        var c = key[pos] == 'A' ? 'B' : 'A';
+        var bad = key[..pos] + c + key[(pos + 1)..];
+        Assert.False(Eval(bad).IsPro);
+    }
+
+    [Fact]
+    public void ForgedKey_SignedWithOtherKey_IsRejected()
+    {
+        var other = LicenseCrypto.CreateKeyPair();
+        var forged = LicenseKey.Create(NewData(Device), other.privateKeyBase64);
+        Assert.Equal(LicenseState.InvalidSignature, Eval(forged).State);
     }
 
     [Theory]
-    [InlineData(LicensePlan.Monthly)]
-    [InlineData(LicensePlan.Yearly)]
-    [InlineData(LicensePlan.Lifetime)]
-    public void ValidLicense_IsPro(LicensePlan plan)
+    [InlineData("")]
+    [InlineData("hello")]
+    [InlineData("BNX-SC-PRO-1234-5678")]
+    [InlineData("BNX-SC-PRO-UUUU-UUUU")]
+    public void Garbage_IsRejectedWithMessage(string input)
     {
-        var exp = plan == LicensePlan.Lifetime ? (DateTime?)null : DateTime.UtcNow.AddDays(10);
-        var st = LicenseEvaluator.Evaluate(Issue(plan, exp), new[] { Keys.Pub }, Device, DateTime.UtcNow, null);
-        Assert.Equal(LicenseState.Active, st.State);
-        Assert.Equal(Edition.Pro, st.Edition);
-    }
-
-    [Fact]
-    public void RoundTripThroughFileText_StillValid()
-    {
-        var text = Issue(LicensePlan.Yearly, DateTime.UtcNow.AddDays(100)).ToFileText();
-        var st = LicenseEvaluator.Evaluate(SignedLicense.Parse(text), new[] { Keys.Pub }, Device, DateTime.UtcNow, null);
-        Assert.Equal(LicenseState.Active, st.State);
-    }
-
-    [Fact]
-    public void TamperedPayload_IsRejected()
-    {
-        var lic = Issue(LicensePlan.Monthly, DateTime.UtcNow.AddDays(1));
-        var json = SignedLicense.Utf8(lic.PayloadBytes).Replace("\"Monthly\"", "\"Lifetime\"");
-        lic.PayloadBase64 = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(json));
-        var st = LicenseEvaluator.Evaluate(lic, new[] { Keys.Pub }, Device, DateTime.UtcNow, null);
-        Assert.Equal(LicenseState.InvalidSignature, st.State);
+        var st = Eval(input);
         Assert.False(st.IsPro);
+        Assert.False(string.IsNullOrWhiteSpace(st.Message));
     }
 
     [Fact]
-    public void LicenseFromOtherKey_IsRejected()
+    public void RevokedLicense_IsRejected()
+    {
+        var data = NewData(Device);
+        var key = LicenseKey.Create(data, Keys.Prv);
+        var list = RevocationList.Create(new[] { data.LicenseId }, Keys.Prv);
+        var body = RevocationList.ParseVerified(list.ToText(), new[] { Keys.Pub });
+        Assert.NotNull(body);
+        Assert.Equal(LicenseState.Revoked, Eval(key, Device, body!.RevokedLicenseIds).State);
+    }
+
+    [Fact]
+    public void ForgedRevocationList_IsIgnored()
     {
         var other = LicenseCrypto.CreateKeyPair();
-        var st = LicenseEvaluator.Evaluate(Issue(LicensePlan.Lifetime, null), new[] { other.publicKeyBase64 }, Device, DateTime.UtcNow, null);
-        Assert.Equal(LicenseState.InvalidSignature, st.State);
+        var list = RevocationList.Create(new[] { "LIC-AAAA" }, other.privateKeyBase64);
+        Assert.Null(RevocationList.ParseVerified(list.ToText(), new[] { Keys.Pub }));
+        Assert.Null(RevocationList.ParseVerified("{nonsense", new[] { Keys.Pub }));
     }
 
     [Fact]
-    public void OtherDevice_IsRejected()
+    public void ManyKeys_AreUnique()
     {
-        var st = LicenseEvaluator.Evaluate(Issue(LicensePlan.Lifetime, null), new[] { Keys.Pub }, "FFFF-0000-FFFF-0000", DateTime.UtcNow, null);
-        Assert.Equal(LicenseState.WrongDevice, st.State);
-        Assert.False(st.IsPro);
-    }
-
-    [Fact]
-    public void Expired_FallsBackToFree()
-    {
-        var st = LicenseEvaluator.Evaluate(Issue(LicensePlan.Monthly, DateTime.UtcNow.AddMinutes(-1)), new[] { Keys.Pub }, Device, DateTime.UtcNow, null);
-        Assert.Equal(LicenseState.Expired, st.State);
-        Assert.Equal(Edition.Free, st.Edition);
-    }
-
-    [Fact]
-    public void Trial_IsProTrial_ThenExpires()
-    {
-        var lic = Issue(LicensePlan.Trial, DateTime.UtcNow.AddDays(7));
-        Assert.Equal(Edition.ProTrial, LicenseEvaluator.Evaluate(lic, new[] { Keys.Pub }, Device, DateTime.UtcNow, null).Edition);
-        Assert.Equal(LicenseState.Expired, LicenseEvaluator.Evaluate(lic, new[] { Keys.Pub }, Device, DateTime.UtcNow.AddDays(8), null).State);
-    }
-
-    [Fact]
-    public void ClockMovedBack_IsDetected()
-    {
-        var now = DateTime.UtcNow;
-        var st = LicenseEvaluator.Evaluate(Issue(LicensePlan.Monthly, now.AddDays(20)), new[] { Keys.Pub }, Device, now, now.AddDays(10));
-        Assert.Equal(LicenseState.ClockTampered, st.State);
-    }
-
-    [Fact]
-    public void CorruptedFile_Throws()
-    {
-        Assert.Throws<LicenseFormatException>(() => SignedLicense.Parse("not json"));
-        Assert.Throws<LicenseFormatException>(() => SignedLicense.Parse("{\"payload\":\"###\",\"signature\":\"AA==\"}"));
-    }
-
-    [Fact]
-    public void LicenseKeys_AreWellFormed_AndTyposDetected()
-    {
-        for (int i = 0; i < 200; i++)
+        var ids = new HashSet<string>();
+        var keys = new HashSet<string>();
+        for (int i = 0; i < 500; i++)
         {
-            var k = LicenseKey.Generate();
-            Assert.True(LicenseKey.IsWellFormed(k), k);
-            Assert.True(LicenseKey.IsWellFormed(k.ToLowerInvariant().Replace("-", " ")));
+            var d = NewData();
+            Assert.True(ids.Add(d.LicenseId));
+            Assert.True(keys.Add(LicenseKey.Create(d, Keys.Prv)));
         }
-        var key = LicenseKey.Generate();
-        var chars = key.ToCharArray();
-        chars[6] = chars[6] == 'A' ? 'B' : 'A';
-        Assert.False(LicenseKey.IsWellFormed(new string(chars)));
-        Assert.False(LicenseKey.IsWellFormed("BSCP-AAAAA"));
-        Assert.False(LicenseKey.IsWellFormed(""));
+    }
+
+    [Fact]
+    public void PayloadRoundTrip_PreservesFields()
+    {
+        var d = NewData(Device);
+        var back = LicenseKey.DecodePayload(LicenseKey.EncodePayload(d));
+        Assert.Equal(d.LicenseId, back.LicenseId);
+        Assert.Equal(Device, back.BoundDeviceId);
+        Assert.Equal(LicenseType.Lifetime, back.Type);
+        Assert.Equal(d.IssuedUtc.Date, back.IssuedUtc.Date);
+    }
+
+    [Fact]
+    public void Base32_RoundTrips()
+    {
+        var rnd = new Random(1);
+        for (int n = 1; n < 120; n++)
+        {
+            var b = new byte[n];
+            rnd.NextBytes(b);
+            Assert.Equal(b, Base32.Decode(Base32.Encode(b)));
+        }
     }
 
     [Fact]
     public void Entitlements_FreeCoreFeaturesNeverLocked()
     {
-        var mustBeFree = new[]
-        {
-            Feature.FullScreenCapture, Feature.RegionCapture, Feature.WindowCapture, Feature.ScreenRecording,
-            Feature.SystemAudio, Feature.Microphone, Feature.Crop, Feature.Arrow, Feature.UndoRedo, Feature.Mp4Export
-        };
-        foreach (var f in mustBeFree) Assert.True(FeatureCatalog.IsAllowed(f, Edition.Free), f.ToString());
+        foreach (var f in new[] { Feature.FullScreenCapture, Feature.RegionCapture, Feature.WindowCapture, Feature.DelayedCapture,
+                     Feature.ScreenRecording, Feature.SystemAudio, Feature.Microphone, Feature.Crop, Feature.Arrow, Feature.UndoRedo, Feature.Mp4Export })
+            Assert.True(FeatureCatalog.IsAllowed(f, Edition.Free), f.ToString());
     }
 
     [Fact]
-    public void Entitlements_ProFeaturesLockedForFree_OpenForProAndTrial()
+    public void Entitlements_ProFeaturesLockedForFree_OpenForLifetime()
     {
         foreach (var info in FeatureCatalog.All.Where(i => i.Tier == FeatureTier.Pro))
         {
             Assert.False(FeatureCatalog.IsAllowed(info.Feature, Edition.Free), info.Feature.ToString());
-            Assert.True(FeatureCatalog.IsAllowed(info.Feature, Edition.Pro));
-            Assert.True(FeatureCatalog.IsAllowed(info.Feature, Edition.ProTrial));
+            Assert.True(FeatureCatalog.IsAllowed(info.Feature, Edition.LifetimePro));
         }
     }
 
@@ -153,8 +167,8 @@ public class LicensingTests
     {
         var c = new HttpLicenseServerClient(null);
         Assert.False(c.IsConfigured);
-        var r = await c.ActivateAsync(LicenseKey.Generate(), Device, "pc");
-        Assert.False(r.Success);
+        Assert.False((await c.ActivateAsync("BNX-SC-PRO-X", Device, "pc")).Success);
+        Assert.Null(await c.GetRevocationListAsync());
         Assert.False(new HttpLicenseServerClient("http://insecure.example").IsConfigured);
     }
 }

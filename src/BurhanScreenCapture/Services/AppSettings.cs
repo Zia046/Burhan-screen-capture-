@@ -56,6 +56,8 @@ public sealed class AppSettings
     public bool RecordSystemAudio { get; set; } = true;
     public bool RecordMicrophone { get; set; } = false;
     public string? MicrophoneDeviceId { get; set; }
+    /// <summary>Playback endpoint for system audio; null/empty = follow the Windows default device.</summary>
+    public string? SystemAudioDeviceId { get; set; }
     public float SystemAudioVolume { get; set; } = 1.0f;
     public float MicrophoneVolume { get; set; } = 1.0f;
     public bool RecordCursor { get; set; } = true;

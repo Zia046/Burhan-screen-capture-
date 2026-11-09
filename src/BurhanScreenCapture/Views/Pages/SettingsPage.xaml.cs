@@ -45,7 +45,8 @@ public partial class SettingsPage : UserControl, IPage
         WmText.Text = s.WatermarkText;
         WmOpacity.Value = s.WatermarkOpacity;
         var st = LicenseService.Status;
-        LicenseInfo.Text = $"{LicensePlanInfo.DisplayName(st.Edition == Edition.Free ? LicensePlan.Free : st.Plan)} • Device ID {DeviceIdentity.DeviceId}";
+        LicenseInfo.Text = $"Edition: {EditionInfo.Name(st.Edition)} • License: {EditionInfo.LicenseText(st.Edition)}" +
+                           (st.IsPro ? $" • {st.Data?.LicenseId}" : "") + $" • Device ID {DeviceIdentity.DeviceId}";
         BuildHotkeys();
         _loading = false;
     }

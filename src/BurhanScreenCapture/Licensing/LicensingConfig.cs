@@ -6,19 +6,19 @@ namespace BurhanScreenCapture.Licensing;
 public static class LicensingConfig
 {
     /// <summary>
-    /// HTTPS base URL of the Burhan Nexus licensing server, e.g. "https://license.burhannexus.com/api/".
-    /// Empty = online activation disabled; customers activate with a license file instead.
+    /// Optional HTTPS base URL of a Burhan Nexus activation server (see docs/LICENSING.md, "Online activation").
+    /// Empty = keys are validated offline only (signature + device binding + revocation list).
     /// </summary>
     public const string ServerUrl = "";
 
-    public const string PurchaseUrl = "https://burhannexus.com/screen-capture-pro";   // placeholder
-    public const string SupportEmail = "support@burhannexus.com";                       // placeholder
-    public const string Website = "https://burhannexus.com";                              // placeholder
+    /// <summary>
+    /// Optional HTTPS address of the signed revocation list exported by the License Key Generator
+    /// (for example a raw GitHub file). Checked in the background at startup; empty = only the list built into the app.
+    /// </summary>
+    public const string RevocationListUrl = "";
 
-    public static readonly (LicensePlan Plan, string Price, string Note)[] Plans =
-    {
-        (LicensePlan.Monthly, "Monthly", "Billed every month • cancel any time"),
-        (LicensePlan.Yearly, "Yearly", "Best value • 2 months free"),
-        (LicensePlan.Lifetime, "Lifetime", "Pay once • all 1.x updates"),
-    };
+    // Contact details shown to customers — replace with your real details.
+    public const string PurchaseUrl = "https://burhannexus.com/screen-capture-pro";
+    public const string SupportEmail = "support@burhannexus.com";
+    public const string Website = "https://burhannexus.com";
 }

@@ -2,7 +2,7 @@ using System.Security.Cryptography;
 
 namespace BurhanScreenCapture.Licensing;
 
-/// <summary>ECDSA P-256 signing (vendor side only) and verification (application side).</summary>
+/// <summary>ECDSA P-256 / SHA-256 (IEEE P1363, 64-byte signatures). Private key: vendor only. Public key: embedded in the app.</summary>
 public static class LicenseCrypto
 {
     public static (string publicKeyBase64, string privateKeyBase64) CreateKeyPair()
@@ -12,32 +12,22 @@ public static class LicenseCrypto
                 Convert.ToBase64String(ecdsa.ExportPkcs8PrivateKey()));
     }
 
-    public static SignedLicense Sign(LicenseData data, string privateKeyBase64)
+    public static string PublicKeyFromPrivate(string privateKeyBase64)
     {
-        var payload = SignedLicense.SerializePayload(data);
         using var ecdsa = ECDsa.Create();
-        ecdsa.ImportPkcs8PrivateKey(Convert.FromBase64String(privateKeyBase64), out _);
-        var signature = ecdsa.SignData(payload, HashAlgorithmName.SHA256);
-        return new SignedLicense
-        {
-            PayloadBase64 = Convert.ToBase64String(payload),
-            SignatureBase64 = Convert.ToBase64String(signature)
-        };
+        ecdsa.ImportPkcs8PrivateKey(Convert.FromBase64String(privateKeyBase64.Trim()), out _);
+        return Convert.ToBase64String(ecdsa.ExportSubjectPublicKeyInfo());
     }
 
-    public static bool Verify(SignedLicense license, IEnumerable<string> trustedPublicKeysBase64)
+    public static byte[] SignBytes(byte[] data, string privateKeyBase64)
     {
-        byte[] payload, signature;
-        try
-        {
-            payload = license.PayloadBytes;
-            signature = license.SignatureBytes;
-        }
-        catch (FormatException)
-        {
-            return false;
-        }
+        using var ecdsa = ECDsa.Create();
+        ecdsa.ImportPkcs8PrivateKey(Convert.FromBase64String(privateKeyBase64.Trim()), out _);
+        return ecdsa.SignData(data, HashAlgorithmName.SHA256, DSASignatureFormat.IeeeP1363FixedFieldConcatenation);
+    }
 
+    public static bool VerifyBytes(byte[] data, byte[] signature, IEnumerable<string> trustedPublicKeysBase64)
+    {
         foreach (var key in trustedPublicKeysBase64)
         {
             if (string.IsNullOrWhiteSpace(key)) continue;
@@ -45,7 +35,7 @@ public static class LicenseCrypto
             {
                 using var ecdsa = ECDsa.Create();
                 ecdsa.ImportSubjectPublicKeyInfo(Convert.FromBase64String(key.Trim()), out _);
-                if (ecdsa.VerifyData(payload, signature, HashAlgorithmName.SHA256))
+                if (ecdsa.VerifyData(data, signature, HashAlgorithmName.SHA256, DSASignatureFormat.IeeeP1363FixedFieldConcatenation))
                     return true;
             }
             catch (CryptographicException) { }

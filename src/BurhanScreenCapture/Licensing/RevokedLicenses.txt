@@ -1,0 +1,3 @@
+# License IDs revoked by Burhan Nexus (one per line, e.g. LIC-ABCD-EFGH-JKMN-PQRS).
+# Built into the app. For revocations between releases, publish the signed list from the
+# License Key Generator at LicensingConfig.RevocationListUrl.

@@ -31,6 +31,22 @@ public sealed class AudioDevices : IDisposable
         return list.OrderByDescending(d => d.IsDefault).ToList();
     }
 
+    /// <summary>Active playback endpoints (speakers / headphones), default first.</summary>
+    public static List<AudioDeviceItem> Speakers()
+    {
+        var list = new List<AudioDeviceItem>();
+        try
+        {
+            using var en = new MMDeviceEnumerator();
+            string? def = null;
+            try { def = en.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia).ID; } catch { }
+            foreach (var d in en.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active))
+                list.Add(new AudioDeviceItem(d.ID, d.FriendlyName, d.ID == def));
+        }
+        catch (Exception ex) { Log.Warn("Playback enumeration failed: " + ex.Message); }
+        return list.OrderByDescending(d => d.IsDefault).ToList();
+    }
+
     public static bool HasPlaybackDevice()
     {
         try
@@ -42,11 +58,14 @@ public sealed class AudioDevices : IDisposable
     }
 
     /// <summary>Peak level 0..1 of the default playback device (system audio).</summary>
-    public float SystemPeak()
+    public float SystemPeak(string? deviceId = null)
     {
         try
         {
-            _render ??= _enum.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);
+            if (_render is not null && !string.IsNullOrEmpty(deviceId) && _render.ID != deviceId) _render = null;
+            _render ??= string.IsNullOrEmpty(deviceId)
+                ? _enum.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia)
+                : _enum.GetDevice(deviceId);
             return _render.AudioMeterInformation.MasterPeakValue;
         }
         catch { _render = null; return 0; }
