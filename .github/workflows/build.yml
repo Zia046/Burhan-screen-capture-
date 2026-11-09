@@ -70,9 +70,23 @@ jobs:
         if: always()
         shell: pwsh
         run: |
+          Add-Type -AssemblyName System.Drawing
+          $codec = [Drawing.Imaging.ImageCodecInfo]::GetImageEncoders() | Where-Object MimeType -eq 'image/jpeg'
+          $ep = New-Object Drawing.Imaging.EncoderParameters 1
+          $ep.Param[0] = New-Object Drawing.Imaging.EncoderParameter ([Drawing.Imaging.Encoder]::Quality), 82L
           foreach ($n in "ui-light-home","ui-dark-recorder","ui-light-capture","ui-dark-upgrade","ui-light-settings","ui-editor","ui-upgrade-dialog","ui-preview","editor-output","ui-pro-history","ui-dark-tools") {
             $f = "selftest/$n.png"
-            if (Test-Path $f) { Write-Host "@@IMG $n"; Write-Host ([Convert]::ToBase64String([IO.File]::ReadAllBytes($f))); Write-Host "@@END" }
+            if (!(Test-Path $f)) { continue }
+            $img = [Drawing.Image]::FromFile((Resolve-Path $f))
+            $w = [Math]::Min(1000, $img.Width); $h = [int]($img.Height * $w / $img.Width)
+            $bmp = New-Object Drawing.Bitmap $w, $h
+            $g = [Drawing.Graphics]::FromImage($bmp); $g.InterpolationMode = 'HighQualityBicubic'; $g.DrawImage($img, 0, 0, $w, $h); $g.Dispose()
+            $ms = New-Object IO.MemoryStream; $bmp.Save($ms, $codec, $ep)
+            $b64 = [Convert]::ToBase64String($ms.ToArray())
+            Write-Host "@@IMG $n"
+            for ($i = 0; $i -lt $b64.Length; $i += 4000) { Write-Host ("@@B " + $b64.Substring($i, [Math]::Min(4000, $b64.Length - $i))) }
+            Write-Host "@@END"
+            $img.Dispose(); $bmp.Dispose()
           }
 
       - uses: actions/upload-artifact@v4
