@@ -12,6 +12,8 @@
     <Description>Screenshot capture, screen recording, audio recording and image editing by Burhan Nexus.</Description>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+    <!-- ScreenRecorderLib is a native x64 component: always build x64 -->
+    <Platform Condition="'$(Platform)' == '' Or '$(Platform)' == 'AnyCPU'">x64</Platform>
     <PlatformTarget>x64</PlatformTarget>
     <Platforms>x64</Platforms>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
