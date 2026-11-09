@@ -1,63 +1,89 @@
 # Licensing — Burhan Screen Capture Pro
 
-## Overview
-* **Free Edition** — no license; all free features, no limits.
-* **Pro Trial** — 7 days, started once per computer from the app.
-* **Pro Monthly / Yearly / Lifetime** — a signed license file bound to one device.
+There are exactly two editions:
 
-A license is a small JSON file (`.bslic`) whose payload (plan, license key, device ID, issue and expiry dates,
-customer name) is signed with **ECDSA P-256 / SHA-256**. The app embeds only the **public** key, so nobody
-can create or modify licenses without the private key. Validation is fully offline, so Pro works without
-internet after activation. Stored licenses are additionally protected with Windows DPAPI (per user).
-Feature access is enforced in code through one `Entitlements` gate (not by hiding buttons).
+| | Free Edition | Lifetime Pro |
+|---|---|---|
+| Price | Free forever | One-time purchase |
+| Key needed | No | Yes (`BNX-SC-PRO-…`) |
+| Expires | Never | Never |
+| Recurring payment | — | None (no monthly/yearly plans, no renewal) |
 
-Protection included: signature check, device binding (hash of Windows MachineGuid + system volume serial),
-expiry, clock roll-back detection (36 h tolerance), tamper detection. As with any offline desktop
-licensing, a determined attacker who patches the executable can bypass checks; code signing and an
-obfuscator raise that bar further.
+Screen recording, system audio and microphone recording are **free**, with no watermark and no time limit.
 
-## One-time setup before selling (production keys)
-1. Build the generator: `dotnet build tools/LicenseGenerator -c Release`
-2. Create your key pair **on a trusted offline computer**:
-   ```
-   dotnet tools/LicenseGenerator/bin/Release/net8.0/LicenseGenerator.dll keygen --out C:\BurhanKeys
-   ```
-3. Copy the text of `C:\BurhanKeys\public.key` into
-   `src/BurhanScreenCapture/Licensing/ProductionPublicKey.txt`, commit and rebuild.
-4. Keep `private.key` secret and backed up (USB + password manager). **Never commit it.**
-   If it leaks, generate a new pair and release an update.
+## How a license key works
 
-Until step 3 is done, **Release builds cannot activate any license** (the Upgrade page says so).
-Debug builds trust the public development key in `tools/LicenseGenerator/dev-keys/` for testing.
+```
+BNX-SC-PRO-XXXX-XXXX-…            (≈ 175 characters, paste — don't type)
+            └── Crockford base32 of:  payload ‖ ECDSA P-256 / SHA-256 signature (64 bytes)
 
-## Selling today — manual (offline) activation
-1. Customer buys and receives a license key: `LicenseGenerator newkey`
-2. Customer opens **Upgrade to Pro**, copies the **Device ID** and emails it with the key.
-3. You issue the file:
-   ```
-   LicenseGenerator issue --private C:\BurhanKeys\private.key --key BSCP-XXXXX-XXXXX-XXXXX-XXXXX ^
-       --plan Yearly --device ABCD-1234-EF56-7890 --to "Customer Name" --out customer.bslic
-   ```
-   Plans: `Trial`, `Monthly` (31 days), `Yearly` (366 days), `Lifetime` (never expires); override with `--days N`.
-4. Customer clicks **Import license file…**.
-5. **Renewal**: issue a new file with a later expiry. **Device transfer**: customer clicks
-   *Deactivate / transfer*, sends the new Device ID, you issue a new file.
+payload v1 (17 or 25 bytes)
+  version | product | type=Lifetime | deviceLimit | flags | licenseId[10 random bytes] | issuedDay
+  [ | deviceId[8] ]   ← present when the key is locked to one computer
+```
 
-Check a file any time: `LicenseGenerator verify --public public.key --file customer.bslic`
+* The **private signing key** exists only in the *Burhan Nexus License Key Generator*, encrypted with the
+  administrator's password (PBKDF2-SHA256 310 000 iterations → AES-256-GCM). It is never written to the
+  repository, the app, logs or customer files.
+* The app embeds only the **public key** (`src/BurhanScreenCapture/Licensing/ProductionPublicKey.txt`).
+  Changing one character of a key, or signing with any other private key, makes it invalid.
+* **License ID** (`LIC-XXXX-XXXX-XXXX-XXXX`) is 80 bits from a cryptographic RNG; the generator also refuses duplicates.
+* **Device lock (recommended):** the customer sends the Device ID shown in *Upgrade to Pro*; the key then works only
+  on that computer. Keys issued without a Device ID work on any computer (use only for trusted customers).
+* **Activation** is offline: the app verifies the signature, device lock and revocation list, then stores an
+  activation record (key, activation date, device) protected with Windows DPAPI for that Windows user. There is
+  no Boolean "isPro" flag; every start re-verifies the signature. Activated customers are never asked again.
+* **Revocation:** the generator exports a **signed** `revocations.bnxrev`. The app accepts it from
+  `LicensingConfig.RevocationListUrl` (checked in the background when online, cached for offline use) and from
+  the built-in `Licensing/RevokedLicenses.txt`. Forged lists are ignored.
 
-## Online activation (when you have a server)
-Set `LicensingConfig.ServerUrl` (HTTPS only) in `src/BurhanScreenCapture/Licensing/LicensingConfig.cs`.
-The app then calls:
+### Honest limits of offline licensing
+Without an activation server nobody can see globally which computers activated a key. Device-locked keys solve
+sharing for normal users. An unlocked key can be shared; revoke it and publish the list. A computer that never
+goes online and never updates the app cannot learn about a revocation. Like all desktop licensing, a patched
+executable can bypass checks; code signing raises that bar.
+
+## One-time setup (before selling)
+
+1. Install the generator (`BurhanNexusLicenseKeyGenerator-Setup-x.y.z.exe`, **admin artifact — never give it to customers**).
+2. First start → **Create signing key** with a strong password.
+3. **Signing Key & Backup → Copy public key**, paste it into
+   `src/BurhanScreenCapture/Licensing/ProductionPublicKey.txt` on GitHub and commit. CI builds new installers that
+   accept your keys. (Until then the shipping app shows "Developer build: no licensing public key…".)
+4. **Back up** the database + encrypted key to a USB drive. If the key is lost you cannot issue keys accepted by
+   apps already installed.
+
+## Selling a license
+
+1. Customer pays you (bank transfer, JazzCash, Easypaisa, … — payment is outside the software; nothing is faked).
+2. Customer sends their **Device ID** (Upgrade to Pro → Purchase Lifetime License → Email Burhan Nexus does this).
+3. Generator → **Generate New License**: customer name, email, Device ID → **Generate License**.
+4. **Copy customer message** (or **Export License…** for a `.bnxlic` file) and send it.
+5. Customer: **Upgrade to Pro → Enter License Key → paste → Activate** → *LICENSE STATUS: LIFETIME PRO ACTIVATED*.
+
+**Device transfer:** customer clicks *Deactivate / transfer*, sends the new Device ID; issue a new key for it and
+revoke the old one. **Refund/abuse:** *License History → Revoke*, then *Revocations → Export signed revocation list*
+and publish it.
+
+## Generator data
+`%AppData%\Burhan Nexus\License Key Generator\`
+* `signing-key.bnxkey` — encrypted private key + public key
+* `licenses.json` — license database (ID, key, customer, email, product, type, device limit, device, created,
+  status, revocation, activation info, notes)
+* `backups\` — automatic copy before every change (last 50)
+
+## Optional activation server
+Set `LicensingConfig.ServerUrl` (HTTPS) to add central tracking. The app then calls:
 
 | Endpoint | Request JSON | Response JSON |
 |---|---|---|
-| `POST v1/activate` | `{ licenseKey, deviceId, deviceName, product: "BSC-PRO" }` | `{ ok, message, license: { payload, signature } }` |
-| `POST v1/refresh` | `{ licenseKey, deviceId, product }` | same as activate |
+| `POST v1/activate` | `{ licenseKey, deviceId, deviceName, product }` | `{ ok, message, licenseKey? }` (a device-locked key signed by the server) |
 | `POST v1/deactivate` | `{ licenseKey, deviceId, product }` | `{ ok, message }` |
+| `GET v1/revocations` | — | signed revocation list text |
 
-The server stores keys, plan, expiry and the activated device(s), enforces the device limit and signs the
-payload with the private key (same format as `LicenseCrypto.Sign`). The app verifies every server response
-locally, so a fake server cannot grant Pro. Subscription licenses are refreshed silently when they are within
-5 days of expiry and the computer is online; offline use continues until the expiry date.
+If the server refuses (revoked, device limit), activation fails with its message. If it is unreachable, a valid
+signed key still activates offline. No server is included or running today.
 
-No payment or activation service is operational yet — `ServerUrl` is intentionally empty.
+## Command-line tool (automation)
+`tools/LicenseGenerator`: `keygen`, `issue [--device]`, `verify`, `revoke-list` — used by CI.
+Debug builds also trust `tools/LicenseGenerator/dev-keys/dev-test-public.txt` (its private key is public — test only).

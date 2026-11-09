@@ -23,14 +23,21 @@ dotnet publish src/BurhanScreenCapture/BurhanScreenCapture.csproj -c Release -r 
 curl -L -o installer\redist\vc_redist.x64.exe https://aka.ms/vs/17/release/vc_redist.x64.exe
 "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /DAppVersion=1.0.0 /DPublishDir=..\publish\app installer\BurhanScreenCapture.iss
 ```
-Output: `artifacts\BurhanScreenCapturePro-Setup-1.0.0.exe`.
+dotnet publish tools/LicenseKeyGenerator/LicenseKeyGenerator.csproj -c Release -r win-x64 --self-contained true -o publish\generator
+"C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /DAppVersion=1.0.0 /DPublishDir=..\publish\generator installer\LicenseKeyGenerator.iss
+```
+Output: `artifacts\BurhanScreenCapturePro-Setup-x.exe` and `artifacts\BurhanNexusLicenseKeyGenerator-Setup-x.exe`.
+```
 Before a commercial release, add your production public key (see `docs/LICENSING.md`).
 
 ## Automated build (GitHub Actions)
 `.github/workflows/build.yml` runs on every push on a Windows runner:
-unit tests → Debug build → licensing end-to-end with the generator → **self-test on a real Windows desktop**
-(screenshots, recordings, editor, GIF, OCR, Free/Pro gating, activation/expiry/tamper/trial, UI snapshots in
-light and dark) → self-contained Release publish → start-up smoke test → installer → portable zip.
+virtual audio devices (Scream + VB-CABLE) → unit tests → self-contained Release publish of both apps →
+generator self-test (published exe) → app self-test on the published exe: capture, editor, GIF, OCR, all 8
+recording/audio combinations with pause/resume and double stop, back-to-back sessions, missing-device fallback,
+invalid/forged/tampered/wrong-device keys, activation from a generator-exported file → second process:
+persistence after restart, already-activated, revocation, deactivation → smoke test of shipping executables →
+installers for both apps.
 Tag `vX.Y.Z` to publish a GitHub Release.
 
 Run the self-test yourself:

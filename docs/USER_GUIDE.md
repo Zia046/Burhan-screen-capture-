@@ -37,7 +37,11 @@ Recordings are MP4 (H.264 video, AAC audio). Files are written in a crash-safe f
 still leaves a playable file. If an audio device is unplugged or the display changes, recording stops and
 the part recorded so far is kept.
 
-**Microphone not working?** Windows *Settings › Privacy & security › Microphone* must allow desktop apps.
+Choose the speakers/headphones to record (or *Windows default*, which follows device changes) and the microphone.
+**Audio only** records system audio and/or microphone to an `.m4a` file.
+
+**Microphone not working?** Windows *Settings › Privacy & security › Microphone* must allow desktop apps; the app
+checks this before recording and tells you. If a saved device was unplugged, the Windows default is used.
 
 ## Image editor
 Tools (left): Select (V), Arrow (A), Line (L), Rectangle (R), Ellipse (E), Text (T), Crop (C) and the Pro tools.
@@ -61,9 +65,12 @@ Pro keeps unlimited history and adds search (by name, date or OCR text).
 * **GIF recording**, **Recording profiles**, **H.265**, **custom bitrate**.
 * **Batch processing** — convert/resize/compress/watermark many images; originals stay untouched.
 
-## Licensing
-See **Upgrade to Pro**: start the 7-day trial, activate with your license key, or import a license file.
-Your **Device ID** is shown there — send it with your key when requesting a license file or a transfer.
+## Free Edition and Lifetime Pro
+* **Free Edition** — free forever, no key. Recording with system audio and microphone is included.
+* **Lifetime Pro** — pay once, never expires. **Upgrade to Pro → Purchase Lifetime License** shows how to buy and
+  your **Device ID**. When you receive your key: **Enter License Key → paste → Activate**.
+  You will see *LICENSE STATUS: LIFETIME PRO ACTIVATED* with license type, activation date, License ID and device.
+* Pro keeps working offline. To move it to another computer use **Deactivate / transfer** and contact Burhan Nexus.
 
 ## Files and folders
 * Screenshots: `Pictures\Burhan Screen Capture` (configurable)
