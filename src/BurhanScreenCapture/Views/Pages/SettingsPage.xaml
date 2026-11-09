@@ -64,7 +64,7 @@
                         <TextBox x:Name="NamePattern" Grid.Column="1" LostFocus="OnChanged" ToolTip="Use {date} and {time}"/>
                     </Grid>
                     <CheckBox x:Name="AutoSave" Style="{StaticResource Switch}" Content="Save screenshots automatically" Margin="0,6" Click="OnChanged"/>
-                    <CheckBox x:Name="Clip" Style="{StaticResource Switch}" Content="Copy screenshots to clipboard" Margin="0,6" Click="OnChanged"/>
+                    <CheckBox x:Name="ClipBox" Style="{StaticResource Switch}" Content="Copy screenshots to clipboard" Margin="0,6" Click="OnChanged"/>
                     <Grid Style="{StaticResource Row}">
                         <Grid.ColumnDefinitions><ColumnDefinition Width="220"/><ColumnDefinition/></Grid.ColumnDefinitions>
                         <TextBlock Text="After capture" Style="{StaticResource Label}"/>

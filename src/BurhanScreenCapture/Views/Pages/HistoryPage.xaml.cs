@@ -27,7 +27,7 @@ public partial class HistoryPage : UserControl, IPage
                                    || e.DateText.Contains(q, StringComparison.OrdinalIgnoreCase)
                                    || (e.OcrText?.Contains(q, StringComparison.OrdinalIgnoreCase) ?? false));
         var list = items.ToList();
-        List.ItemsSource = list;
+        HistoryList.ItemsSource = list;
         Empty.Visibility = all.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         LimitText.Text = Entitlements.IsAllowed(Feature.UnlimitedHistory)
             ? $"{all.Count} screenshot(s) • unlimited history (Pro)"

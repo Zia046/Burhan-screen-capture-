@@ -21,9 +21,13 @@ public static class ThemeManager
         {
             Source = new Uri($"pack://application:,,,/BurhanScreenCapture;component/Themes/{(IsDark ? "Dark" : "Light")}.xaml")
         };
+        // Later merged dictionaries take precedence, so remove every theme dictionary and append the new one.
         var merged = Application.Current.Resources.MergedDictionaries;
-        if (_current is not null) merged.Remove(_current);
-        merged.Insert(0, dict);
+        foreach (var old in merged.Where(d => d.Source is not null &&
+                     (d.Source.OriginalString.EndsWith("Light.xaml", StringComparison.OrdinalIgnoreCase) ||
+                      d.Source.OriginalString.EndsWith("Dark.xaml", StringComparison.OrdinalIgnoreCase))).ToList())
+            merged.Remove(old);
+        merged.Add(dict);
         _current = dict;
         foreach (Window w in Application.Current.Windows) Native.WindowEffects.ApplyTitleBarTheme(w, IsDark);
         ThemeChanged?.Invoke();

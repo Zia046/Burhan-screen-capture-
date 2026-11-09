@@ -25,7 +25,7 @@ public partial class SettingsPage : UserControl, IPage
         ShotFolder.Text = s.ScreenshotFolder;
         NamePattern.Text = s.FileNamePattern;
         AutoSave.IsChecked = s.AutoSaveScreenshots;
-        Clip.IsChecked = s.CopyToClipboardAfterCapture;
+        ClipBox.IsChecked = s.CopyToClipboardAfterCapture;
         AfterBox.SelectedIndex = (int)s.AfterCapture;
         RecFolder.Text = s.RecordingFolder;
         FpsBox.SelectedIndex = s.RecordingFps switch { 15 => 0, 24 => 1, 60 => 3, _ => 2 };
@@ -67,7 +67,7 @@ public partial class SettingsPage : UserControl, IPage
 
         s.FileNamePattern = string.IsNullOrWhiteSpace(NamePattern.Text) ? "Screenshot {date} {time}" : NamePattern.Text.Trim();
         s.AutoSaveScreenshots = AutoSave.IsChecked == true;
-        s.CopyToClipboardAfterCapture = Clip.IsChecked == true;
+        s.CopyToClipboardAfterCapture = ClipBox.IsChecked == true;
         if (AfterBox.SelectedIndex >= 0) s.AfterCapture = (AfterCaptureAction)AfterBox.SelectedIndex;
         if (FpsBox.SelectedItem is ComboBoxItem { Tag: string f }) s.RecordingFps = int.Parse(f);
         if (QualityBox.SelectedIndex >= 0) s.RecordingQuality = (RecordingQuality)QualityBox.SelectedIndex;

@@ -432,7 +432,7 @@ public partial class EditorWindow : Window
                 _annots.Add(new SpotlightAnnotation(rect, 0.6));
                 break;
             default:
-                if (_draft is not null && (_draft is ArrowAnnotation or LineAnnotation ? (p - _start).Length >= 4 : big))
+                if (_draft is not null && ((_draft is ArrowAnnotation || _draft is LineAnnotation) ? (p - _start).Length >= 4 : big))
                 {
                     Snapshot();
                     _annots.Add(_draft);

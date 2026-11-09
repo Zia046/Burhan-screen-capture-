@@ -6,6 +6,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using BurhanScreenCapture.Native;
 using BurhanScreenCapture.Services;
+using Path = System.Windows.Shapes.Path;
 
 namespace BurhanScreenCapture.Views;
 

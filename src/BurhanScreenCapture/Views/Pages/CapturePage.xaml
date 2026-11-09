@@ -80,7 +80,7 @@
                 <StackPanel>
                     <TextBlock Text="After capture" Style="{StaticResource H2}"/>
                     <CheckBox x:Name="AutoSave" Style="{StaticResource Switch}" Content="Save screenshots automatically" Margin="0,4" Click="OnOption"/>
-                    <CheckBox x:Name="Clip" Style="{StaticResource Switch}" Content="Copy to clipboard" Margin="0,4" Click="OnOption"/>
+                    <CheckBox x:Name="ClipBox" Style="{StaticResource Switch}" Content="Copy to clipboard" Margin="0,4" Click="OnOption"/>
                     <CheckBox x:Name="CursorBox" Style="{StaticResource Switch}" Content="Include mouse pointer" Margin="0,4" Click="OnOption"/>
                     <Grid Margin="0,10,0,0">
                         <Grid.ColumnDefinitions><ColumnDefinition Width="160"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>

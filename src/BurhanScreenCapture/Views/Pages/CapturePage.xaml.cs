@@ -22,7 +22,7 @@ public partial class CapturePage : UserControl, IPage
         MonitorBox.ItemsSource = monitors;
         MonitorBox.SelectedItem = monitors.FirstOrDefault(m => m.IsPrimary) ?? monitors.FirstOrDefault();
         AutoSave.IsChecked = s.AutoSaveScreenshots;
-        Clip.IsChecked = s.CopyToClipboardAfterCapture;
+        ClipBox.IsChecked = s.CopyToClipboardAfterCapture;
         CursorBox.IsChecked = s.IncludeCursorInScreenshot;
         After.SelectedIndex = (int)s.AfterCapture;
         Format.SelectedIndex = s.ScreenshotFormat == ImageFormatOption.Jpg ? 1 : 0;
@@ -64,7 +64,7 @@ public partial class CapturePage : UserControl, IPage
         if (_loading || !IsLoaded) return;
         var s = SettingsService.Current;
         s.AutoSaveScreenshots = AutoSave.IsChecked == true;
-        s.CopyToClipboardAfterCapture = Clip.IsChecked == true;
+        s.CopyToClipboardAfterCapture = ClipBox.IsChecked == true;
         s.IncludeCursorInScreenshot = CursorBox.IsChecked == true;
         if (After.SelectedIndex >= 0) s.AfterCapture = (AfterCaptureAction)After.SelectedIndex;
         if (Format.SelectedIndex >= 0) s.ScreenshotFormat = Format.SelectedIndex == 1 ? ImageFormatOption.Jpg : ImageFormatOption.Png;
