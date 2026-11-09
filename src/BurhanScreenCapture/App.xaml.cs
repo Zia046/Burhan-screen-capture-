@@ -54,6 +54,25 @@ public partial class App : Application
         }) { IsBackground = true, Name = "SingleInstanceSignal" };
         t.Start();
 
+        var selfTestIdx = Array.IndexOf(e.Args, "--selftest");
+        if (selfTestIdx >= 0 && selfTestIdx + 1 < e.Args.Length)
+        {
+            string? Arg(string n) { var i = Array.IndexOf(e.Args, n); return i >= 0 && i + 1 < e.Args.Length ? e.Args[i + 1] : null; }
+            MainWindow = new MainWindow();
+            Dispatcher.BeginInvoke(async () =>
+            {
+                int code = await SelfTest.RunAsync(e.Args[selfTestIdx + 1], Arg("--license"), Arg("--expired"));
+                Shutdown(code);
+            });
+            return;
+        }
+        if (e.Args.Contains("--print-device-id"))
+        {
+            File.WriteAllText(Path.Combine(AppPaths.LocalData, "device-id.txt"), DeviceIdentity.DeviceId);
+            Shutdown(0);
+            return;
+        }
+
         bool minimized = e.Args.Contains("--minimized") || SettingsService.Current.StartMinimized;
         MainWindow = new MainWindow();
         if (!minimized) MainWindow.Show();

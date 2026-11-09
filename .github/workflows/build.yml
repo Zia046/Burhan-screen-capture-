@@ -49,6 +49,34 @@ jobs:
           dotnet $gen verify --public tools/LicenseGenerator/dev-keys/dev-test-public.txt --file ci.bslic
           if ($LASTEXITCODE -ne 0) { throw "license verify failed" }
 
+      - name: End-to-end self-test on Windows desktop (capture, recording, editor, GIF, OCR, licensing, UI)
+        shell: pwsh
+        run: |
+          $exe = (Get-ChildItem src/BurhanScreenCapture/bin -Recurse -Filter BurhanScreenCapture.exe | Where-Object FullName -like '*Debug*' | Select-Object -First 1).FullName
+          Start-Process -FilePath $exe -ArgumentList "--print-device-id" -Wait
+          $dev = (Get-Content "$env:LOCALAPPDATA\Burhan Nexus\Screen Capture Pro\device-id.txt").Trim()
+          Write-Host "Device ID: $dev"
+          $gen = "tools/LicenseGenerator/bin/Release/net8.0/LicenseGenerator.dll"
+          $prv = "tools/LicenseGenerator/dev-keys/dev-test-private.txt"
+          dotnet $gen issue --private $prv --key (dotnet $gen newkey).Trim() --plan Yearly --device $dev --to "Self Test" --out "$PWD/pro.bslic"
+          dotnet $gen issue --private $prv --key (dotnet $gen newkey).Trim() --plan Monthly --device $dev --days -1 --out "$PWD/expired.bslic"
+          $out = "$PWD/selftest"
+          $p = Start-Process -FilePath $exe -ArgumentList "--selftest","`"$out`"","--license","`"$PWD/pro.bslic`"","--expired","`"$PWD/expired.bslic`"" -PassThru -Wait
+          Get-Content "$out/results.txt"
+          Get-ChildItem "$env:LOCALAPPDATA\Burhan Nexus\Screen Capture Pro\logs" | Get-Content | Select-String "ERROR|WARN" | Select-Object -First 40
+          if ($p.ExitCode -ne 0) { throw "Self-test failed with exit code $($p.ExitCode)" }
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: selftest-results
+          path: |
+            selftest/*.png
+            selftest/*.txt
+            selftest/*.json
+            selftest/*.gif
+            selftest/recordings/*
+
       - name: Publish (Release, self-contained win-x64)
         run: >
           dotnet publish src/BurhanScreenCapture/BurhanScreenCapture.csproj -c Release -r win-x64

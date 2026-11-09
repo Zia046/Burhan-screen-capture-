@@ -114,7 +114,7 @@ public static class RecorderController
             _bar.Show();
             try { Recorder.SetExcludeFromCapture(Native.WindowEffects.Handle(_bar), true); } catch { }
             App.Tray?.SetRecording(true);
-            Application.Current.MainWindow?.Hide();
+            if (!SelfTest.Active) Application.Current.MainWindow?.Hide();
             return true;
         }
         catch (Exception ex)
@@ -312,7 +312,7 @@ public static class RecorderController
                 LastFile = path;
                 Log.Info("Recording saved: " + path);
                 App.Tray?.Notify("Recording saved", $"{Path.GetFileName(path)} ({Elapsed:hh\\:mm\\:ss}) — click to open the folder.", () => Dialogs.ShowInFolder(path));
-                if (!_exitWhenDone) new RecordingSavedWindow(path, Elapsed).Show();
+                if (!_exitWhenDone && !SelfTest.Active) new RecordingSavedWindow(path, Elapsed).Show();
             }
             StateChanged?.Invoke();
             if (_exitWhenDone) Application.Current.Shutdown();
@@ -330,6 +330,7 @@ public static class RecorderController
             var msg = FriendlyError(e.Error) + (partial ? $"\n\nThe part recorded before the problem was saved:\n{path}" : "");
             if (partial) LastFile = path;
             StateChanged?.Invoke();
+            if (SelfTest.Active) { SelfTest.LastFailure = msg; return; }
             MessageBox.Show(msg, "Recording stopped", MessageBoxButton.OK, MessageBoxImage.Warning);
             if (_exitWhenDone) Application.Current.Shutdown();
         });
@@ -359,6 +360,8 @@ public static class RecorderController
 
     private static bool Fail(string message)
     {
+        Log.Warn("Recording not started: " + message);
+        if (SelfTest.Active) { SelfTest.LastFailure = message; return false; }
         MessageBox.Show(message, App.AppName, MessageBoxButton.OK, MessageBoxImage.Warning);
         return false;
     }

@@ -705,6 +705,39 @@ public partial class EditorWindow : Window
         Render(); UpdateUi();
     }
 
+    // ---------------- automated self-test hooks
+    internal BitmapSource SelfTestDraw()
+    {
+        if (_base is null) throw new InvalidOperationException("no image");
+        var w = _base.PixelWidth; var h = _base.PixelHeight;
+        Snapshot();
+        _annots.Add(new ArrowAnnotation(new Point(40, 40), new Point(w * 0.4, h * 0.3), _color, 5));
+        _annots.Add(new LineAnnotation(new Point(40, h * 0.5), new Point(w * 0.3, h * 0.5), Colors.Orange, 4));
+        _annots.Add(new RectAnnotation(new Rect(w * 0.45, 60, 220, 120), Colors.DodgerBlue, 4, false));
+        _annots.Add(new EllipseAnnotation(new Rect(w * 0.7, 60, 160, 120), Colors.LimeGreen, 4));
+        _annots.Add(new TextAnnotation(new Point(60, h * 0.6), "Burhan Screen Capture Pro", _color, 32, true));
+        _annots.Add(new HighlightAnnotation(new Rect(60, h * 0.7, 300, 40), Colors.Gold));
+        _annots.Add(new StepAnnotation(new Point(w * 0.5, h * 0.6), 1, _color, 34));
+        _annots.Add(new StepAnnotation(new Point(w * 0.56, h * 0.6), 2, _color, 34));
+        _annots.Add(new MagnifierAnnotation(new Rect(w * 0.2, h * 0.2, 60, 60), new Rect(w * 0.25, h * 0.75, 150, 150), _color));
+        _annots.Add(new WatermarkAnnotation("© Burhan Nexus", 0.6));
+        SetBase(ImageEffects.Blur(_base, new Rect(w * 0.6, h * 0.4, 200, 80), 12), false);
+        SetBase(ImageEffects.Pixelate(_base, new Rect(w * 0.6, h * 0.55, 200, 80), 12), false);
+        Render();
+        OnUndo(null, null);
+        if (_annots.Count != 0) throw new InvalidOperationException("undo failed");
+        OnRedo(null, null);
+        if (_annots.Count != 10) throw new InvalidOperationException("redo failed: " + _annots.Count);
+        UpdateLayout();
+        return Flatten()!;
+    }
+
+    internal void SelfTestForceClose()
+    {
+        _dirty = false;
+        Close();
+    }
+
     private void OnClosing(object? sender, CancelEventArgs e)
     {
         CommitText();
