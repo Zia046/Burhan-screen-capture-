@@ -66,6 +66,15 @@ jobs:
           Get-ChildItem "$env:LOCALAPPDATA\Burhan Nexus\Screen Capture Pro\logs" | Get-Content | Select-String "ERROR|WARN" | Select-Object -First 40
           if ($p.ExitCode -ne 0) { throw "Self-test failed with exit code $($p.ExitCode)" }
 
+      - name: Print UI snapshots (base64, for review)
+        if: always()
+        shell: pwsh
+        run: |
+          foreach ($n in "ui-light-home","ui-dark-recorder","ui-light-capture","ui-dark-upgrade","ui-light-settings","ui-editor","ui-upgrade-dialog","ui-preview","editor-output","ui-pro-history","ui-dark-tools") {
+            $f = "selftest/$n.png"
+            if (Test-Path $f) { Write-Host "@@IMG $n"; Write-Host ([Convert]::ToBase64String([IO.File]::ReadAllBytes($f))); Write-Host "@@END" }
+          }
+
       - uses: actions/upload-artifact@v4
         if: always()
         with:
