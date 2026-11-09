@@ -48,6 +48,17 @@ jobs:
           if (-not $p.WaitForExit(150000)) { $p.Kill(); Write-Host "VB-CABLE installer timed out" }
           Get-CimInstance Win32_SoundDevice | Format-Table Name, Status
 
+      - name: Allow desktop apps to use the microphone (Windows privacy setting)
+        shell: pwsh
+        run: |
+          foreach ($root in "HKLM:","HKCU:") {
+            $k = "$root\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\microphone"
+            New-Item -Path $k -Force | Out-Null
+            Set-ItemProperty -Path $k -Name Value -Value "Allow"
+            New-Item -Path "$k\NonPackaged" -Force | Out-Null
+            Set-ItemProperty -Path "$k\NonPackaged" -Name Value -Value "Allow"
+          }
+
       - name: Unit tests (licensing & entitlements)
         run: dotnet test tests/BurhanScreenCapture.Tests -c Release --logger "console;verbosity=normal"
 

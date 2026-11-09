@@ -26,6 +26,7 @@ public sealed record RecordingProfile(string Name, int Fps, RecordingQuality Qua
 public static class RecorderController
 {
     private static Recorder? _rec;
+    private static AudioOnlyRecorder? _audioRec;
     private static RecordingBarWindow? _bar;
     private static readonly Stopwatch Clock = new();
     private static string? _outputPath;
@@ -33,9 +34,8 @@ public static class RecorderController
     private static bool _discard;
     private static bool _starting;
 
-    public static RecorderStatus Status => _rec?.Status ?? RecorderStatus.Idle;
-    public static bool IsBusy => _starting || (_rec is not null && _rec.Status != RecorderStatus.Idle);
-    public static bool IsPaused => _rec?.Status == RecorderStatus.Paused;
+    public static bool IsBusy => _starting || _audioRec is not null || (_rec is not null && _rec.Status != RecorderStatus.Idle);
+    public static bool IsPaused => _rec?.Status == RecorderStatus.Paused || _audioRec?.IsPaused == true;
     public static TimeSpan Elapsed => Clock.Elapsed;
     public static RecordingRequest? LastRequest { get; private set; }
     public static string? LastFile { get; private set; }
@@ -88,6 +88,11 @@ public static class RecorderController
                 if (mics.Count == 0)
                     return Fail("Microphone not detected. Please connect or select a microphone.");
                 _micDevice = ResolveDevice(s.MicrophoneDeviceId, mics, "microphone");
+                // Open the microphone briefly: catches Windows privacy blocks and exclusive use before recording starts.
+                using var probe = new AudioDevices();
+                var micError = probe.StartMicPreview(_micDevice == "" ? null : _micDevice);
+                probe.StopMicPreview();
+                if (micError is not null) return Fail(micError);
             }
 
             var folder = s.RecordingFolder;
@@ -112,6 +117,24 @@ public static class RecorderController
                     if (!await CountdownWindow.RunAsync(3)) return Cancelled();
             }
 
+            if (req.Kind == RecordingSourceKind.AudioOnly)
+            {
+                var a = new AudioOnlyRecorder(_outputPath);
+                a.Completed += path => Application.Current.Dispatcher.BeginInvoke(() => HandleComplete(path));
+                a.Failed += (path, err) => Application.Current.Dispatcher.BeginInvoke(() => HandleFailed(path, err));
+                _discard = false;
+                _stopRequested = false;
+                LastRequest = req;
+                Clock.Reset();
+                a.Start(s.RecordSystemAudio ? _systemDevice ?? "" : null, s.SystemAudioVolume,
+                        s.RecordMicrophone ? _micDevice ?? "" : null, s.MicrophoneVolume);
+                _audioRec = a;
+                Clock.Start();
+                Log.Info($"Audio-only recording started -> {_outputPath}");
+                ShowBar(req);
+                return true;
+            }
+
             var options = BuildOptions(req, s);
             _rec = Recorder.CreateRecorder(options);
             _rec.OnRecordingComplete += OnComplete;
@@ -126,11 +149,7 @@ public static class RecorderController
             Clock.Start();
             Log.Info($"Recording started: {req.Kind} -> {_outputPath}");
 
-            _bar = new RecordingBarWindow(req);
-            _bar.Show();
-            try { Recorder.SetExcludeFromCapture(Native.WindowEffects.Handle(_bar), true); } catch { }
-            App.Tray?.SetRecording(true);
-            if (!SelfTest.Active) Application.Current.MainWindow?.Hide();
+            ShowBar(req);
             return true;
         }
         catch (Exception ex)
@@ -147,6 +166,15 @@ public static class RecorderController
     }
 
     private static string? _systemDevice, _micDevice;
+
+    private static void ShowBar(RecordingRequest req)
+    {
+        _bar = new RecordingBarWindow(req);
+        _bar.Show();
+        try { Recorder.SetExcludeFromCapture(Native.WindowEffects.Handle(_bar), true); } catch { }
+        App.Tray?.SetRecording(true);
+        if (!SelfTest.Active && req.Kind != RecordingSourceKind.AudioOnly) Application.Current.MainWindow?.Hide();
+    }
 
     /// <summary>Returns the saved endpoint ID if it is still connected, otherwise "" (Windows default) and tells the user.</summary>
     private static string ResolveDevice(string? savedId, List<AudioDeviceItem> available, string what)
@@ -279,6 +307,7 @@ public static class RecorderController
 
     public static void Pause()
     {
+        if (_audioRec is not null) { if (!_audioRec.IsPaused && !_stopRequested) { _audioRec.Pause(); Clock.Stop(); StateChanged?.Invoke(); } return; }
         if (_rec?.Status != RecorderStatus.Recording) return;
         _rec.Pause();
         Clock.Stop();
@@ -287,6 +316,7 @@ public static class RecorderController
 
     public static void Resume()
     {
+        if (_audioRec is not null) { if (_audioRec.IsPaused && !_stopRequested) { _audioRec.Resume(); Clock.Start(); StateChanged?.Invoke(); } return; }
         if (_rec?.Status != RecorderStatus.Paused) return;
         _rec.Resume();
         Clock.Start();
@@ -299,6 +329,15 @@ public static class RecorderController
     /// the file is closed (audio and video flushed, MP4 finalised) before OnRecordingComplete fires.</summary>
     public static void Stop()
     {
+        if (_audioRec is not null)
+        {
+            if (_stopRequested) return;
+            _stopRequested = true;
+            Clock.Stop();
+            StateChanged?.Invoke();
+            _audioRec.Stop();
+            return;
+        }
         var rec = _rec;
         if (rec is null || _stopRequested) return;
         var st = rec.Status;
@@ -332,6 +371,11 @@ public static class RecorderController
     /// <summary>Called on application exit: finalises the file synchronously as far as possible.</summary>
     public static void Abort()
     {
+        if (_audioRec is not null)
+        {
+            _audioRec.StopAndWait(); // flush + encode before the process exits
+            return;
+        }
         if (_rec is null || _rec.Status == RecorderStatus.Idle) return;
         try { _rec.Stop(); } catch { }
         var sw = Stopwatch.StartNew();
@@ -341,11 +385,12 @@ public static class RecorderController
     private static void OnStatus(object? sender, RecordingStatusEventArgs e) =>
         Application.Current.Dispatcher.BeginInvoke(() => StateChanged?.Invoke());
 
-    private static void OnComplete(object? sender, RecordingCompleteEventArgs e)
+    private static void OnComplete(object? sender, RecordingCompleteEventArgs e) =>
+        Application.Current.Dispatcher.BeginInvoke(() => HandleComplete(e.FilePath));
+
+    private static void HandleComplete(string path)
     {
-        Application.Current.Dispatcher.BeginInvoke(() =>
         {
-            var path = e.FilePath;
             Cleanup();
             if (_discard)
             {
@@ -362,30 +407,36 @@ public static class RecorderController
             }
             StateChanged?.Invoke();
             if (_exitWhenDone) Application.Current.Shutdown();
-        });
+        }
     }
 
-    private static void OnFailed(object? sender, RecordingFailedEventArgs e)
+    private static void OnFailed(object? sender, RecordingFailedEventArgs e) =>
+        Application.Current.Dispatcher.BeginInvoke(() => HandleFailed(e.FilePath, e.Error));
+
+    private static void HandleFailed(string? path, string? error)
     {
-        Application.Current.Dispatcher.BeginInvoke(() =>
         {
-            var path = e.FilePath;
-            Log.Error("Recording failed: " + e.Error);
+            Log.Error("Recording failed: " + error);
             Cleanup();
             bool partial = !string.IsNullOrEmpty(path) && File.Exists(path) && new FileInfo(path).Length > 0;
-            var msg = FriendlyError(e.Error) + (partial ? $"\n\nThe part recorded before the problem was saved:\n{path}" : "");
+            var msg = FriendlyError(error) + (partial ? $"\n\nThe part recorded before the problem was saved:\n{path}" : "");
             if (partial) LastFile = path;
             StateChanged?.Invoke();
             if (SelfTest.Active) { SelfTest.LastFailure = msg; return; }
             MessageBox.Show(msg, "Recording stopped", MessageBoxButton.OK, MessageBoxImage.Warning);
             if (_exitWhenDone) Application.Current.Shutdown();
-        });
+        }
     }
 
     private static void Cleanup()
     {
         Clock.Stop();
         _stopRequested = false;
+        if (_audioRec is not null)
+        {
+            try { _audioRec.Dispose(); } catch { }
+            _audioRec = null;
+        }
         if (_rec is not null)
         {
             _rec.OnRecordingComplete -= OnComplete;
